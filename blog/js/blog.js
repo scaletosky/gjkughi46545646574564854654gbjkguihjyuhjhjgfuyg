@@ -128,7 +128,15 @@
 
         if (tag.toLowerCase() === "h2") {
           var entry = { id: id, text: plainText, children: [] };
-          toc.push(entry);
+          // The trailing "Frequently Asked Questions" stub heading
+          // (a one-line lead-in immediately before the real FAQ
+          // accordion, present in ~44 of the 59 articles) still gets
+          // an id and still renders in the body, but is left out of
+          // the TOC/section-numbering so it doesn't show up as a
+          // duplicate nav entry right next to the FAQ section below.
+          if (!isFaqStubHeading(plainText)) {
+            toc.push(entry);
+          }
           lastH2 = entry;
         } else if (tag.toLowerCase() === "h3" && lastH2) {
           lastH2.children.push({ id: id, text: plainText });
@@ -188,6 +196,162 @@
       }
       return "<p" + attrs + ' class="blog-lead">';
     });
+  }
+
+  // ------------------------------------------------------------
+  // PHASE 12 — content-derived reading aids (Quick Answer, At a
+  // Glance, Key Takeaways, Bottom Line, section numbering).
+  // Every function here only reads existing article HTML/data and
+  // extracts/trims/labels it — none of them write new sentences or
+  // invent facts. Where a safe candidate can't be found, the caller
+  // gets back a falsy/empty result and the corresponding section is
+  // skipped entirely (spec Parts 50/51).
+  // ------------------------------------------------------------
+
+  // Headings that signal "the article is about to give the direct,
+  // condensed answer right here" — pulled from a real editorial
+  // pattern already present across the 60-article library ("The
+  // Short Answer: ...", "Quick Answer: ...", "The Honest Answer:
+  // ...", "Quick Self-Check: ...", etc). Matched case-insensitively
+  // against the start of the first H2's own text.
+  var QUICK_ANSWER_HEADING_RE = /^(the\s+)?(short|quick|honest|core|simple)\s+(answer|question|difference|distinction)\b|^quick\s+self-check\b|^can\s+.*\bshort\s+answer\b/i;
+
+  // Extracts the plain-text paragraphs immediately under a given H2
+  // id, stopping at the next heading. Returns an array of plain-text
+  // sentences (HTML tags stripped), never re-worded.
+  function paragraphsUnderHeading(contentHtml, headingId) {
+    var re = new RegExp('<h2[^>]*\\sid="' + headingId + '"[^>]*>[\\s\\S]*?</h2>([\\s\\S]*?)(?=<h2[\\s>]|$)', 'i');
+    var m = contentHtml.match(re);
+    if (!m) return [];
+    var block = m[1];
+    var paras = block.match(/<p[^>]*>([\s\S]*?)<\/p>/gi) || [];
+    return paras.map(function (p) {
+      return p.replace(/<[^>]+>/g, "").trim();
+    }).filter(Boolean);
+  }
+
+  // Splits plain text into sentences (simple, punctuation-based —
+  // good enough for trimming existing prose, not for parsing).
+  function splitSentences(text) {
+    var matches = text.match(/[^.!?]+[.!?]+(?:["')\]]+)?(?:\s+|$)/g);
+    return matches ? matches.map(function (s) { return s.trim(); }) : [text.trim()];
+  }
+
+  // Builds the Quick Answer block: only when the article's first H2
+  // matches the known "direct answer" heading pattern. Takes that
+  // section's own sentences (existing text, not reworded) up to a
+  // 2–5 sentence budget. If the pattern doesn't match, returns null
+  // and the caller skips Quick Answer entirely — no invented summary
+  // is ever substituted.
+  function deriveQuickAnswer(article, toc, contentHtml) {
+    if (!toc.length) return null;
+    var first = toc[0];
+    if (!QUICK_ANSWER_HEADING_RE.test(first.text)) return null;
+
+    var paras = paragraphsUnderHeading(contentHtml, first.id);
+    if (!paras.length) return null;
+
+    var sentences = [];
+    for (var i = 0; i < paras.length && sentences.length < 5; i++) {
+      sentences = sentences.concat(splitSentences(paras[i]));
+    }
+    if (!sentences.length) return null;
+
+    var take = sentences.slice(0, Math.min(5, Math.max(2, sentences.length >= 3 ? 3 : sentences.length)));
+    var text = take.join(" ").trim();
+    if (!text) return null;
+    return { text: text, sourceHeading: first.text };
+  }
+
+  // Builds "At a Glance" bullets purely from the article's own H2
+  // section titles (the existing outline), reworded not at all —
+  // this is always safe since a section title is not a claim, just
+  // a label for content that already exists under it. Used when a
+  // Quick Answer paragraph isn't available (spec Part 6).
+  function deriveAtAGlance(toc, max) {
+    max = max || 6;
+    var skip = /^(frequently asked questions|faq|related reading|where scale to sky fits|conclusion)$/i;
+    var picked = toc
+      .map(function (e) { return e.text; })
+      .filter(function (t) { return !skip.test(t.trim()) && !QUICK_ANSWER_HEADING_RE.test(t); })
+      .slice(0, max);
+    return picked.length >= 3 ? picked : null;
+  }
+
+  // Key Takeaways: derived from the *last* real content section
+  // (commonly a decision framework / checklist / bottom-line-style
+  // close) when it contains a list, since a list already IS a set of
+  // discrete points an author intended as takeaways — no synthesis
+  // needed, just relocation/labelling. Falls back to null (skipped)
+  // when no such list exists near the end of the article.
+  function deriveKeyTakeaways(toc, contentHtml, max) {
+    max = max || 5;
+    var skip = /^(frequently asked questions|faq|related reading|where scale to sky fits)$/i;
+    var candidates = toc.filter(function (e) { return !skip.test(e.text.trim()); });
+    for (var i = candidates.length - 1; i >= Math.max(0, candidates.length - 4); i--) {
+      var id = candidates[i].id;
+      var re = new RegExp('<h2[^>]*\\sid="' + id + '"[^>]*>[\\s\\S]*?</h2>([\\s\\S]*?)(?=<h2[\\s>]|$)', 'i');
+      var m = contentHtml.match(re);
+      if (!m) continue;
+      var listMatch = m[1].match(/<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/i);
+      if (!listMatch) continue;
+      var items = (listMatch[2].match(/<li[^>]*>([\s\S]*?)<\/li>/gi) || [])
+        .map(function (li) { return li.replace(/<[^>]+>/g, "").trim(); })
+        .filter(Boolean);
+      if (items.length >= 3) {
+        return items.slice(0, max);
+      }
+    }
+    return null;
+  }
+
+  // Bottom Line: for comparison/decision articles, the final
+  // substantive H2 before FAQ/related/CTA scaffolding often already
+  // functions as the conclusion ("A Simple Decision Framework", "How
+  // Scale To Sky Fits Into This", etc). Rather than re-labelling body
+  // content (which the spec doesn't ask for outside true comparison
+  // framing), this is only used to decide whether the article *has*
+  // a natural closing section — actual styling is applied via CSS to
+  // the existing last H2 wrapper, not by duplicating its text.
+  function hasComparisonSignal(article, toc) {
+    var title = (article.title || "").toLowerCase();
+    if (/\bvs\.?\b/.test(title) || / versus /.test(title)) return true;
+    return toc.some(function (e) { return /comparison|side-by-side|decision framework/i.test(e.text); });
+  }
+
+  // Identifies a trailing "Frequently Asked Questions" stub H2 that
+  // exists purely as a one-line lead-in to the separately-rendered
+  // FAQ accordion (spec Part 30/44 articles use this pattern). When
+  // found, it's excluded from the TOC and given a small CSS treatment
+  // instead of appearing as a duplicate navigation entry right next
+  // to the real FAQ section that follows it.
+  function isFaqStubHeading(text) {
+    return /^frequently asked questions$/i.test((text || "").trim());
+  }
+
+  // Adds a visual section number (data-section attribute, styled via
+  // CSS ::before) to every "real" H2 in reading order, and a distinct
+  // class to the trailing FAQ-stub heading so it reads as a quiet
+  // transition into the FAQ accordion rather than another numbered
+  // chapter (spec Parts 13, 30). Purely attribute/class additions —
+  // no heading text is changed.
+  function annotateHeadings(contentHtml, toc) {
+    var numbered = {};
+    toc.forEach(function (entry, i) { numbered[entry.id] = i + 1; });
+
+    return contentHtml.replace(
+      /<h2([^>]*)\sid="([^"]+)"([^>]*)>([\s\S]*?)<\/h2>/gi,
+      function (match, before, id, after, inner) {
+        var plainText = inner.replace(/<[^>]+>/g, "").trim();
+        if (isFaqStubHeading(plainText)) {
+          return '<h2' + before + ' id="' + id + '"' + after + ' class="blog-h2-faq-lead">' + inner + '</h2>';
+        }
+        var n = numbered[id];
+        if (!n) return match;
+        var attrs = before + ' id="' + id + '"' + after;
+        return '<h2' + attrs + ' data-section-number="' + String(n).padStart(2, "0") + '">' + inner + '</h2>';
+      }
+    );
   }
 
   function tocHtml(toc) {
@@ -390,7 +554,40 @@
         '</div>'
       : '';
 
-    // ---- Inline CTA (auto-inserted after the middle H2, content-driven) ----
+    // ---- Quick Answer / At a Glance (spec Parts 5–6) ----
+    // Quick Answer wins when the article's own opening section is
+    // already written as a direct answer; otherwise falls back to a
+    // structural "At a Glance" outline of the real H2s; if neither
+    // is safely derivable, nothing is shown (never fabricated).
+    var quickAnswer = deriveQuickAnswer(a, toc, built.html);
+    var atAGlance = !quickAnswer ? deriveAtAGlance(toc, 6) : null;
+    var orientationHtml = "";
+    if (quickAnswer) {
+      orientationHtml +=
+        '<div class="blog-quick-answer">' +
+        '<span class="blog-quick-answer-label">Quick Answer</span>' +
+        '<p>' + escapeHtml(quickAnswer.text) + '</p>' +
+        '</div>';
+    } else if (atAGlance) {
+      orientationHtml +=
+        '<div class="blog-at-a-glance">' +
+        '<span class="blog-at-a-glance-label">At a Glance</span>' +
+        '<ul>' + atAGlance.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join("") + '</ul>' +
+        '</div>';
+    }
+
+    // ---- Key Takeaways (spec Part 7) ----
+    var takeaways = deriveKeyTakeaways(toc, built.html, 5);
+    if (takeaways) {
+      orientationHtml +=
+        '<div class="blog-key-takeaways">' +
+        '<span class="blog-key-takeaways-label">Key Takeaways</span>' +
+        '<ul>' + takeaways.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join("") + '</ul>' +
+        '</div>';
+    }
+    var orientationBlock = orientationHtml ? '<div class="blog-article-orientation">' + orientationHtml + '</div>' : '';
+
+    // ---- Inline CTA (content-driven placement — spec Part 27) ----
     var serviceHref = CATEGORY_SERVICE_MAP[a.category] || "/services.html";
     var inlineCtaHtml =
       '<div class="blog-inline-cta">' +
@@ -405,13 +602,20 @@
     var contentHtml = built.html || "<p><em>Content coming soon.</em></p>";
     contentHtml = wrapTables(contentHtml);
     contentHtml = markLeadParagraph(contentHtml);
-    // Insert the inline CTA right after the middle H2 section, if the
-    // article has at least 2 H2s — keeps it out of very short content
-    // and avoids it always sitting in the same spot relative to length.
+    contentHtml = annotateHeadings(contentHtml, toc);
+
+    // Place the inline CTA after a complete section that sits inside
+    // the 40–60% mark of the article's real (numbered) H2s — never
+    // immediately after a heading or mid-subsection, since it's
+    // inserted at a full H2 boundary, one section later than before.
+    // Skipped entirely on short articles (<2 real H2s).
     if (toc.length >= 2) {
-      var midIndex = Math.floor(toc.length / 2);
-      var midId = toc[midIndex].id;
-      var marker = new RegExp('(<h2[^>]*\\sid="' + midId + '"[^>]*>[\\s\\S]*?</h2>)');
+      var targetIndex = Math.min(
+        toc.length - 1,
+        Math.max(0, Math.round(toc.length * 0.5) - 1)
+      );
+      var targetId = toc[targetIndex].id;
+      var marker = new RegExp('(<h2[^>]*\\sid="' + targetId + '"[^>]*>[\\s\\S]*?</h2>[\\s\\S]*?)(?=<h2[\\s>]|$)');
       if (marker.test(contentHtml)) {
         contentHtml = contentHtml.replace(marker, "$1" + inlineCtaHtml);
       }
@@ -506,6 +710,7 @@
       breadcrumbs +
       header +
       featuredImage +
+      orientationBlock +
       '<div class="blog-article-layout">' +
       '<div class="blog-article-main">' +
       '<div class="blog-article-body">' + contentHtml + '</div>' +
