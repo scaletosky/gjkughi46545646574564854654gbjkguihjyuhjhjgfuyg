@@ -1105,6 +1105,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   opacity: 0;
   background: radial-gradient(circle at 88% 8%, rgba(109, 61, 245, 0.09), transparent 45%);
   transition: opacity var(--transition);
+  pointer-events: none;
 }
 
 .service-card:hover,
@@ -2006,6 +2007,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   background: linear-gradient(180deg, transparent 40%, rgba(23,21,31,0.35));
   opacity: 0;
   transition: opacity var(--transition);
+  pointer-events: none;
 }
 .work-card:hover .work-thumb::after { opacity: 1; }
 
@@ -2092,6 +2094,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   width: 480px; height: 480px;
   background: radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%);
   top: -160px; right: -100px;
+  pointer-events: none;
 }
 .final-cta h2 { color: var(--white); max-width: 640px; margin: 0 auto; }
 .final-cta p { color: rgba(255,255,255,0.75); margin: 20px auto 36px; max-width: 480px; }
@@ -2310,6 +2313,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   inset: 34px;
   border-radius: 50%;
   border: 1px solid var(--primary-light);
+  pointer-events: none;
 }
 
 @keyframes services-hero-float {
@@ -2390,6 +2394,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   background: var(--primary-light);
   transform: translate(-14px, 14px);
   z-index: 0;
+  pointer-events: none;
 }
 .about-hero-image .about-hero-visual {
   position: relative;
@@ -2634,6 +2639,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   inset: 5px;
   border-radius: 50%;
   background: var(--primary);
+  pointer-events: none;
 }
 
 @media (max-width: 900px) {
@@ -3259,6 +3265,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   background: linear-gradient(180deg, rgba(109,61,245,0.05), rgba(23,21,31,0.4));
   opacity: 0;
   transition: opacity var(--transition);
+  pointer-events: none;
 }
 .portfolio-item:hover .portfolio-thumb::after { opacity: 1; }
 
@@ -4953,6 +4960,7 @@ body.modal-open {
   top: 21px; left: 0; right: 0;
   height: 1px;
   background: var(--border);
+  pointer-events: none;
 }
 .svc-timeline-step:last-child::before { display: none; }
 .svc-timeline-num {
