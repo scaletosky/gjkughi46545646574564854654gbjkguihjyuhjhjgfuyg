@@ -560,6 +560,18 @@ function initPageTransitions() {
     setTimeout(go, 120);
     setTimeout(go, 600);
   });
+
+  // Safety net: if this page is restored from the back-forward cache
+  // (e.g. user taps back after a CTA click), the overlay/body opacity
+  // can be frozen mid-transition from before navigation, making the
+  // whole page look faded out and eating clicks via pointer-events.
+  // Reset everything so the restored page is immediately interactive.
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    overlay.style.pointerEvents = 'none';
+    overlay.style.opacity = '0';
+    document.body.style.opacity = '1';
+  });
 }
 
 /* ---------------- Hero: subtle mouse parallax on ecosystem cards ---------------- */
