@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="case-study-title">Portfolio Project | Scale To Sky</title>
+<meta name="description" id="case-study-meta-description" content="Selected work from Scale To Sky.">
+<link rel="canonical" id="case-study-canonical" href="https://scaletosky.com/portfolio-project.html">
+<meta property="og:title" id="case-study-og-title" content="Portfolio Project | Scale To Sky">
+<meta property="og:description" id="case-study-og-description" content="Selected work from Scale To Sky.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Scale To Sky">
+<meta property="og:locale" content="en_IN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Scale To Sky">
+<meta name="twitter:description" content="Scale To Sky is a digital marketing agency in Lucknow.">
+<meta name="twitter:image" content="https://scaletosky.com/assets/images/logo-mark-full.png">
+<meta property="og:url" id="case-study-og-url" content="https://scaletosky.com/portfolio-project.html">
+<link rel="icon" type="image/png" href="assets/images/logo-mark-small.png">
+<link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="case-study-page">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="logo" aria-label="Scale To Sky"><img src="assets/images/logo-mark-small.png" alt="Scale To Sky - Digital Marketing Agency in Lucknow" class="logo-mark" width="60" height="44"><span class="logo-text" data-logo-reveal aria-hidden="true"><span class="logo-mask"><span class="logo-chars" data-logo-chars>Scale To </span><span class="logo-chars logo-sky" data-logo-chars>Sky</span></span></span></a>
+    <noscript><style>.logo-chars{opacity:1 !important;}</style></noscript>
+    <nav class="main-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="header-cta">
+      <a href="contact.html" class="btn btn-primary" data-cta-id="lets-talk">Book a Call</a>
+      <button class="hamburger" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-panel">
+  <nav aria-label="Mobile">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="portfolio.html">Portfolio</a>
+    <a href="blog.html">Blog</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="contact.html" class="btn btn-primary" data-cta-id="lets-talk">Book a Call</a>
+</div>
+
+<main>
+
+  <!-- LOADING STATE -->
+  <div class="portfolio-status case-study-status" id="case-study-loading" style="padding-top: calc(var(--header-h) + 90px);">
+    <span class="portfolio-spinner" aria-hidden="true"></span>
+    <span>Loading project...</span>
+  </div>
+
+  <!-- ERROR / 404 STATE -->
+  <div class="portfolio-status case-study-status" id="case-study-error" style="padding-top: calc(var(--header-h) + 90px);" hidden>
+    <p id="case-study-error-heading">Project not found</p>
+    <p id="case-study-error-body">The project you're looking for isn't available.</p>
+    <a href="portfolio.html" class="btn btn-secondary" style="margin-top: 20px;">&larr; Back to Our Work</a>
+  </div>
+
+  <!-- CASE STUDY CONTENT (populated entirely by js/portfolio-project.js) -->
+  <article id="case-study-content" hidden>
+
+    <!-- 01. PROJECT HERO MEDIA (large, full content width) -->
+    <section class="cs-hero">
+      <div class="container">
+        <a href="portfolio.html" class="cs-back-link">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L4 8l6 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Back to Our Work
+        </a>
+
+        <div class="cs-hero-media-wrap" id="cs-main-media"></div>
+      </div>
+    </section>
+
+    <!-- 02. PROJECT INFORMATION (title, short description, metadata row) -->
+    <section class="cs-info-section">
+      <div class="container">
+        <span class="kicker" id="cs-hero-kicker">Our work</span>
+        <h1 class="cs-hero-title" id="cs-hero-title"></h1>
+        <p class="cs-hero-desc" id="cs-hero-description" hidden></p>
+
+        <div class="cs-hero-meta" id="cs-hero-meta" hidden>
+          <div class="cs-hero-meta-item" id="cs-hero-meta-client" hidden>
+            <span class="cs-meta-label">Client</span>
+            <span class="cs-meta-value" id="cs-hero-meta-client-value"></span>
+          </div>
+          <div class="cs-hero-meta-item" id="cs-hero-meta-industry" hidden>
+            <span class="cs-meta-label">Industry</span>
+            <span class="cs-meta-value" id="cs-hero-meta-industry-value"></span>
+          </div>
+          <div class="cs-hero-meta-item" id="cs-hero-meta-services" hidden>
+            <span class="cs-meta-label">Services</span>
+            <span class="cs-meta-value" id="cs-hero-meta-services-value"></span>
+          </div>
+        </div>
+
+        <a href="#" class="cs-hero-live-link" id="cs-live-project-link" target="_blank" rel="noopener noreferrer" hidden>
+          Visit live project
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 3h7v7M13 3L4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- 03. PROJECT OVERVIEW (project.description) -->
+    <section class="section-pad-sm" id="cs-description-section" hidden>
+      <div class="container story-split">
+        <div class="kicker-block">
+          <span class="kicker">Project overview</span>
+        </div>
+        <div class="cs-copy-block" id="cs-description-body"></div>
+      </div>
+    </section>
+
+    <!-- 04. ABOUT THE PROJECT -->
+    <section class="section-pad-sm" id="cs-about-section" hidden>
+      <div class="container story-split">
+        <div class="kicker-block">
+          <span class="kicker">About the project</span>
+        </div>
+        <div class="cs-copy-block" id="cs-about-body"></div>
+      </div>
+    </section>
+
+    <!-- 05. THE CHALLENGE -->
+    <section class="section-pad-sm" id="cs-challenge-section" style="background: var(--surface);" hidden>
+      <div class="container story-split">
+        <div class="kicker-block">
+          <span class="kicker">The challenge</span>
+        </div>
+        <div class="cs-copy-block" id="cs-challenge-body"></div>
+      </div>
+    </section>
+
+    <!-- 06. WHAT WE DID -->
+    <section class="section-pad-sm" id="cs-approach-section" hidden>
+      <div class="container story-split">
+        <div class="kicker-block">
+          <span class="kicker">What we did</span>
+        </div>
+        <div class="cs-copy-block" id="cs-approach-body"></div>
+      </div>
+    </section>
+
+    <!-- SERVICES (compact tags, shown within What We Did when present) -->
+    <section class="cs-services-section" id="cs-services-section" hidden>
+      <div class="container">
+        <div class="cs-services-list" id="cs-services-list"></div>
+      </div>
+    </section>
+
+    <!-- 07. THE WORK / MEDIA GALLERY -->
+    <section class="section-pad-sm" id="cs-gallery-section" hidden>
+      <div class="container">
+        <span class="kicker">The work</span>
+        <div class="cs-gallery" id="cs-gallery"></div>
+      </div>
+    </section>
+
+    <!-- 08. THE OUTCOME -->
+    <section class="section-pad-sm" id="cs-outcome-section" style="background: var(--surface);" hidden>
+      <div class="container story-split">
+        <div class="kicker-block">
+          <span class="kicker">The outcome</span>
+        </div>
+        <div class="cs-copy-block" id="cs-outcome-body"></div>
+      </div>
+    </section>
+
+    <!-- 09. RESULTS / METRICS -->
+    <section class="section-pad-sm" id="cs-results-section" hidden>
+      <div class="container" style="text-align:center;">
+        <span class="kicker">Results</span>
+        <div class="stats-grid cs-results-grid" id="cs-results-grid" style="margin-top: 40px;"></div>
+      </div>
+    </section>
+
+    <!-- 10. CLIENT TESTIMONIAL -->
+    <section class="section-pad-sm" id="cs-testimonial-section" hidden>
+      <div class="container">
+        <div style="text-align:center;">
+          <span class="kicker">What the client says</span>
+        </div>
+        <div class="testimonial-spotlight">
+          <p class="testimonial-quote" id="cs-testimonial-quote"></p>
+          <div class="testimonial-person">
+            <div class="avatar-mark" id="cs-testimonial-avatar"></div>
+            <div>
+              <div class="name" id="cs-testimonial-name"></div>
+              <div class="role" id="cs-testimonial-role"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </article>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="index.html" class="logo" aria-label="Scale To Sky"><img src="assets/images/logo-mark-small.png" alt="Scale To Sky - Digital Marketing Agency in Lucknow" class="logo-mark" width="60" height="44"><span class="logo-text" aria-hidden="true"><span class="logo-mask"><span class="logo-chars">Scale To <span class="logo-sky">Sky</span></span></span></span></a>
+        <p>Scale To Sky is a digital marketing and web development agency based in Lucknow, Uttar Pradesh, helping brands across India grow with social media management, websites, apps, Meta Ads, and video content.</p>
+        <div class="footer-social">
+          <a href="https://www.instagram.com/scaletosky" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="igGradientFooter" cx="30%" cy="107%" r="150%">
+                  <stop offset="0%" stop-color="#fdf497"/>
+                  <stop offset="5%" stop-color="#fdf497"/>
+                  <stop offset="45%" stop-color="#fd5949"/>
+                  <stop offset="60%" stop-color="#d6249f"/>
+                  <stop offset="90%" stop-color="#285AEB"/>
+                </radialGradient>
+              </defs>
+              <rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#igGradientFooter)"/>
+              <rect x="6" y="6" width="12" height="12" rx="3.6" fill="none" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="16.3" cy="7.7" r="1.1" fill="#fff"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Portfolio</a></li>
+          <li><a href="blog.html">Blog</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Services</h5>
+        <ul>
+          <li><a href="social-media-management.html">Social Media Management</a></li>
+          <li><a href="web-development.html">Web Development</a></li>
+          <li><a href="video-shoot-editing.html">Video Shoot &amp; Editing</a></li>
+          <li><a href="meta-ads.html">Meta Ads</a></li>
+          <li><a href="app-development.html">App Development</a></li>
+          <li><a href="ugc-videos.html">UGC Videos</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li>Indira Nagar, Sector 11,<br>Lucknow, Uttar Pradesh 226016</li>
+          <li><a href="tel:+918957666403">+91 89576 66403</a></li>
+          <li><a href="mailto:Scaletosky08@gmail.com">Scaletosky08@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Scale To Sky. All rights reserved.</span>
+      <span>Digital Marketing Agency in Lucknow, India</span>
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/main.js"></script>
+<script src="js/portfolio-project.js"></script>
+</body>
+</html>

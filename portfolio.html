@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Scale To Sky</title>
+<meta name="description" content="Selected branding, website, product, and marketing work from Scale To Sky">
+<link rel="canonical" href="https://scaletosky.com/portfolio.html">
+<meta property="og:title" content="Portfolio — Scale To Sky">
+<meta property="og:description" content="Selected work across branding, websites, product, and marketing.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://scaletosky.com/portfolio.html">
+<meta property="og:image" content="https://scaletosky.com/assets/images/logo-mark-full.png">
+<meta property="og:site_name" content="Scale To Sky">
+<meta property="og:locale" content="en_IN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Portfolio — Scale To Sky">
+<meta name="twitter:description" content="Selected work across branding, websites, product, and marketing.">
+<meta name="twitter:image" content="https://scaletosky.com/assets/images/logo-mark-full.png">
+<link rel="icon" type="image/png" href="assets/images/logo-mark-small.png">
+<link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://scaletosky.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Portfolio", "item": "https://scaletosky.com/portfolio.html" }
+  ]
+}
+</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="logo" aria-label="Scale To Sky"><img src="assets/images/logo-mark-small.png" alt="Scale To Sky - Digital Marketing Agency in Lucknow" class="logo-mark" width="60" height="44"><span class="logo-text" data-logo-reveal aria-hidden="true"><span class="logo-mask"><span class="logo-chars" data-logo-chars>Scale To </span><span class="logo-chars logo-sky" data-logo-chars>Sky</span></span></span></a>
+    <noscript><style>.logo-chars{opacity:1 !important;}</style></noscript>
+    <nav class="main-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="header-cta">
+      <a href="contact.html" class="btn btn-primary" data-cta-id="lets-talk">Book a Call</a>
+      <button class="hamburger" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-panel">
+  <nav aria-label="Mobile">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="portfolio.html">Portfolio</a>
+    <a href="blog.html">Blog</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="contact.html" class="btn btn-primary" data-cta-id="lets-talk">Book a Call</a>
+</div>
+
+<main>
+
+  <!-- 01. HERO -->
+  <section class="portfolio-hero" id="portfolio-hero-section">
+    <div class="container portfolio-hero-inner">
+      <span class="kicker" id="portfolio-hero-kicker">Our work</span>
+      <h1 class="hero-heading portfolio-hero-heading" id="portfolio-hero-heading">Selected work.</h1>
+      <p class="lead portfolio-hero-description" id="portfolio-hero-description">A sample of the branding, websites, product design, and marketing work we've shipped for clients over the last few years.</p>
+      <p class="lead portfolio-hero-supporting" id="portfolio-hero-supporting" hidden></p>
+      <a href="#portfolio-work" class="btn btn-secondary portfolio-hero-cta" id="portfolio-hero-cta" hidden>View Our Work</a>
+    </div>
+  </section>
+
+  <!-- 02. WORK / TRUST STRIP -->
+  <section class="section-pad-sm" id="portfolio-workstrip-section" hidden>
+    <div class="container">
+      <div class="stats-grid" id="portfolio-workstrip-grid"></div>
+    </div>
+  </section>
+
+  <!-- 03. FEATURED WORK -->
+  <section class="section-pad-sm" id="portfolio-featured-section" hidden>
+    <div class="container">
+      <span class="kicker" id="portfolio-featured-kicker">Selected work</span>
+      <h2 class="section-heading" id="portfolio-featured-heading">Projects built around real business goals.</h2>
+      <p class="lead" id="portfolio-featured-description">Every business has a different challenge.</p>
+      <div class="work-grid" id="portfolio-featured-grid" data-stagger-group style="margin-top: 56px;"></div>
+    </div>
+  </section>
+
+  <!-- 04. ALL PROJECTS + FILTERS -->
+  <section class="section-pad-sm" id="portfolio-work">
+    <div class="container">
+
+      <div id="portfolio-allprojects-heading-wrap" hidden style="margin-bottom: 40px;">
+        <span class="kicker" id="portfolio-allprojects-kicker">More of our work</span>
+        <h2 class="section-heading" id="portfolio-allprojects-heading">Built across different businesses, industries and challenges.</h2>
+        <p class="lead" id="portfolio-allprojects-description"></p>
+      </div>
+
+      <div class="filter-bar" role="group" aria-label="Filter projects by category" id="portfolio-filter-bar">
+        <button class="filter-btn is-active" data-filter="all">All</button>
+      </div>
+
+      <div class="portfolio-status portfolio-loading" id="portfolio-loading">
+        <span class="portfolio-spinner" aria-hidden="true"></span>
+        <span>Loading our work...</span>
+      </div>
+
+      <div class="portfolio-status portfolio-error" id="portfolio-error" hidden>
+        <p>We're updating our portfolio.</p>
+        <p>Please check back soon.</p>
+      </div>
+
+      <div class="portfolio-status portfolio-empty-state" id="portfolio-empty-state" hidden>
+        <p>Our work is taking shape.</p>
+        <p>New projects will appear here soon.</p>
+      </div>
+
+      <div class="portfolio-status portfolio-empty-state" id="portfolio-no-filter-results" hidden>
+        <p>No projects in this category yet.</p>
+      </div>
+
+      <div class="portfolio-grid" id="portfolio-grid" hidden></div>
+
+    </div>
+  </section>
+
+  <!-- 05. TESTIMONIAL -->
+  <section class="section-pad-sm" id="portfolio-testimonial-section" hidden>
+    <div class="container">
+      <div style="text-align:center;">
+        <span class="kicker" id="portfolio-testimonial-kicker">Client word</span>
+        <h2 class="section-heading" id="portfolio-testimonial-heading" style="margin: 0 auto;">What clients say</h2>
+      </div>
+      <div class="testimonial-spotlight">
+        <p class="testimonial-quote" id="portfolio-testimonial-quote"></p>
+        <div class="testimonial-person">
+          <div class="avatar-mark" id="portfolio-testimonial-avatar"></div>
+          <div>
+            <div class="name" id="portfolio-testimonial-name"></div>
+            <div class="role" id="portfolio-testimonial-role"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06. FINAL CTA -->
+  <section class="section-pad-sm" id="portfolio-cta-section">
+    <div class="final-cta reveal">
+      <h2 class="section-heading" style="margin: 0 auto;" id="portfolio-cta-heading">Like what you see?</h2>
+      <p id="portfolio-cta-description">Let's talk about what a similar engagement could look like for your business.</p>
+      <a href="contact.html" class="btn btn-primary" data-cta-id="start-a-project" id="portfolio-cta-button">Start a Project <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </section>
+
+  <!-- 07. FAQ + SOCIAL -->
+  <section class="section-pad-sm faq-social-section">
+    <div class="container">
+      <div class="faq-social-grid">
+
+        <div class="faq-col">
+          <span class="kicker">FAQS</span>
+          <h2 class="faq-heading">Frequently Asked<br>Questions</h2>
+
+          <div class="faq-list" data-stagger-group>
+            <div class="faq-item reveal reveal-stagger">
+              <button class="faq-question" id="faq-q-1" aria-expanded="false" aria-controls="faq-a-1">
+                <span class="faq-num">01</span>
+                <span class="faq-question-text">Why should I choose Scale to Sky over other marketing agencies?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+              <div class="faq-answer" id="faq-a-1" role="region" aria-labelledby="faq-q-1">
+                <div class="faq-answer-inner">
+                  <p>At Scale to Sky, we don't believe in using the same strategy for every business. We take the time to understand your business, target audience, and goals, then build a marketing approach around them. Our focus is clear communication, transparent work, and strategies that are built to drive real business growth.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item reveal reveal-stagger">
+              <button class="faq-question" id="faq-q-2" aria-expanded="false" aria-controls="faq-a-2">
+                <span class="faq-num">02</span>
+                <span class="faq-question-text">Can Scale to Sky help my business generate more leads and customers?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+              <div class="faq-answer" id="faq-a-2" role="region" aria-labelledby="faq-q-2">
+                <div class="faq-answer-inner">
+                  <p>Yes. Our goal is not just to increase likes or followers. We focus on marketing that supports your actual business goals — whether that means reaching the right audience, generating quality leads, increasing inquiries, or helping turn attention into customers. The exact approach depends on your business and its goals.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item reveal reveal-stagger">
+              <button class="faq-question" id="faq-q-3" aria-expanded="false" aria-controls="faq-a-3">
+                <span class="faq-num">03</span>
+                <span class="faq-question-text">How do I get started with Scale to Sky?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </button>
+              <div class="faq-answer" id="faq-a-3" role="region" aria-labelledby="faq-q-3">
+                <div class="faq-answer-inner">
+                  <p>Getting started is simple. Just reach out to our team, tell us about your business and goals, and we'll discuss the best way we can help you grow.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-social-divider" aria-hidden="true"></div>
+
+        <div class="social-col reveal">
+          <span class="kicker">LET'S CONNECT</span>
+          <h3 class="social-heading">Follow Scale To Sky</h3>
+          <p class="social-copy">Stay connected with us across our social channels.</p>
+
+          <div class="social-buttons">
+            <a href="https://www.instagram.com/scaletosky" class="social-btn" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <radialGradient id="igGradient18" cx="30%" cy="107%" r="150%">
+                    <stop offset="0%" stop-color="#fdf497"/>
+                    <stop offset="5%" stop-color="#fdf497"/>
+                    <stop offset="45%" stop-color="#fd5949"/>
+                    <stop offset="60%" stop-color="#d6249f"/>
+                    <stop offset="90%" stop-color="#285AEB"/>
+                  </radialGradient>
+                </defs>
+                <rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#igGradient18)"/>
+                <rect x="6" y="6" width="12" height="12" rx="3.6" fill="none" stroke="#fff" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="1.5"/>
+                <circle cx="16.3" cy="7.7" r="1.1" fill="#fff"/>
+              </svg>
+              <span>Instagram</span>
+            </a>
+            <a href="https://wa.me/918957666403" class="social-btn" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+              <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#25D366"/>
+                <path fill="#fff" d="M12.04 5.5c-3.6 0-6.52 2.92-6.52 6.52 0 1.15.3 2.27.87 3.26l-.92 3.36 3.44-.9a6.5 6.5 0 0 0 3.13.8h.01c3.6 0 6.52-2.93 6.52-6.52 0-1.74-.68-3.38-1.91-4.61a6.48 6.48 0 0 0-4.62-1.91zm3.82 9.33c-.16.45-.94.86-1.3.91-.33.05-.75.07-1.21-.08a11 11 0 0 1-1.05-.39c-1.85-.8-3.06-2.66-3.15-2.79-.09-.12-.75-1-.75-1.9s.47-1.35.64-1.53c.16-.18.36-.22.48-.22h.35c.11 0 .27-.02.41.32.16.38.53 1.33.58 1.42.05.1.08.21.02.34-.06.13-.09.21-.18.32-.09.11-.19.24-.28.33-.09.09-.19.19-.08.38.11.19.49.82 1.06 1.33.73.65 1.34.85 1.53.95.19.09.3.07.41-.04.11-.11.48-.55.6-.75.13-.19.25-.16.42-.09.16.06 1.05.5 1.23.59.18.09.3.13.34.21.05.08.05.44-.11.89z"/>
+              </svg>
+              <span>WhatsApp</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="index.html" class="logo" aria-label="Scale To Sky"><img src="assets/images/logo-mark-small.png" alt="Scale To Sky - Digital Marketing Agency in Lucknow" class="logo-mark" width="60" height="44"><span class="logo-text" aria-hidden="true"><span class="logo-mask"><span class="logo-chars">Scale To <span class="logo-sky">Sky</span></span></span></span></a>
+        <p>Scale To Sky is a digital marketing and web development agency based in Lucknow, Uttar Pradesh, helping brands across India grow with social media management, websites, apps, Meta Ads, and video content.</p>
+        <div class="footer-social">
+          <a href="https://www.instagram.com/scaletosky" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="igGradientFooter" cx="30%" cy="107%" r="150%">
+                  <stop offset="0%" stop-color="#fdf497"/>
+                  <stop offset="5%" stop-color="#fdf497"/>
+                  <stop offset="45%" stop-color="#fd5949"/>
+                  <stop offset="60%" stop-color="#d6249f"/>
+                  <stop offset="90%" stop-color="#285AEB"/>
+                </radialGradient>
+              </defs>
+              <rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#igGradientFooter)"/>
+              <rect x="6" y="6" width="12" height="12" rx="3.6" fill="none" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="16.3" cy="7.7" r="1.1" fill="#fff"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Portfolio</a></li>
+          <li><a href="blog.html">Blog</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Services</h5>
+        <ul>
+          <li><a href="social-media-management.html">Social Media Management</a></li>
+          <li><a href="web-development.html">Web Development</a></li>
+          <li><a href="video-shoot-editing.html">Video Shoot &amp; Editing</a></li>
+          <li><a href="meta-ads.html">Meta Ads</a></li>
+          <li><a href="app-development.html">App Development</a></li>
+          <li><a href="ugc-videos.html">UGC Videos</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li>Indira Nagar, Sector 11,<br>Lucknow, Uttar Pradesh 226016</li>
+          <li><a href="tel:+918957666403">+91 89576 66403</a></li>
+          <li><a href="mailto:Scaletosky08@gmail.com">Scaletosky08@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Scale To Sky. All rights reserved.</span>
+      <span>Digital Marketing Agency in Lucknow, India</span>
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/main.js"></script>
+<script src="js/portfolio-public.js"></script>
+</body>
+</html>
