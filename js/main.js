@@ -230,7 +230,13 @@ function initMobileMenu() {
   });
 
   panel.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', close);
+    // Deliberately not closed synchronously on click: closing immediately
+    // removes .is-open (and its pointer-events) from the panel mid-click,
+    // which on some mobile browsers can cause the same click to be dropped
+    // before the page-transition/navigation listener (in initPageTransitions)
+    // gets to handle it — the link never actually navigates. A microtask-
+    // delay close lets navigation fire first.
+    link.addEventListener('click', () => setTimeout(close, 0));
   });
 
   document.addEventListener('click', (e) => {
@@ -529,6 +535,13 @@ function initPageTransitions() {
   document.body.style.opacity = '0';
   document.body.style.transition = 'opacity 280ms ease';
   requestAnimationFrame(() => { document.body.style.opacity = '1'; });
+  // Safety net: on some mobile browsers requestAnimationFrame can be
+  // delayed or dropped entirely (background tab, low-power throttling,
+  // in-app browser quirks). If the fade-in rAF never runs, the whole
+  // page stays invisible/opacity:0 — taps still register but nothing
+  // looks clickable so it feels broken. Force full opacity shortly
+  // after load no matter what.
+  setTimeout(() => { document.body.style.opacity = '1'; }, 400);
 
   // Delegated listener: works for links present at load AND links added
   // later (e.g. blog CTA buttons injected async by blog.js).
