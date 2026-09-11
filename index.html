@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-  window.STSK_API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "http://localhost:5000"
-    : "https://scale-to-sky-real-backend.onrender.com";
-</script>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scale To Sky | Digital Marketing Agency for Business Growth</title>
@@ -26,6 +20,41 @@
 <link rel="icon" type="image/png" href="assets/images/logo-mark-small.png">
 <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
+<style>
+  /* Subtle animation for the "What We Create" service card mockups */
+  .create-visual-web rect:last-of-type {
+    animation: createPulseBar 2.4s ease-in-out infinite;
+    transform-origin: left center;
+  }
+  .create-visual-app rect:nth-of-type(2) {
+    animation: createFadeShape 2.6s ease-in-out infinite;
+  }
+  .create-visual-content circle,
+  .create-visual-content path {
+    animation: createPlayPulse 1.8s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes createPulseBar {
+    0%, 100% { transform: scaleX(0.85); opacity: 0.85; }
+    50% { transform: scaleX(1); opacity: 1; }
+  }
+  @keyframes createFadeShape {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+  @keyframes createPlayPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .create-visual-web rect:last-of-type,
+    .create-visual-app rect:nth-of-type(2),
+    .create-visual-content circle,
+    .create-visual-content path {
+      animation: none;
+    }
+  }
+</style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -378,36 +407,14 @@
            existing mock social-card visual stays layered on top. -->
       <div class="create-grid" data-stagger-group>
         <div class="create-panel create-panel-featured reveal reveal-stagger">
-          <div class="create-media media-slot media-slot--empty" data-slot-label="Photo: social/creative campaign" aria-hidden="true" style="position:absolute; inset:0; z-index:0; border-radius:inherit;">
-            <!-- <img src="assets/home/images/social-content-flatlay.webp" alt="Social media content and creative campaign flatlay" width="500" height="600" loading="lazy" style="position:absolute; inset:0;"> -->
-          </div>
-          <div class="create-panel-visual create-visual-brand" aria-hidden="true">
-            <div class="create-social-card" style="--r:-4deg;">
-              <div class="create-social-thumb"></div>
-              <div class="create-social-line"></div>
-              <div class="create-social-line short"></div>
-            </div>
-            <div class="create-social-card" style="--r:3deg;">
-              <div class="create-social-thumb"></div>
-              <div class="create-social-line"></div>
-              <div class="create-social-line short"></div>
-            </div>
-            <div class="create-social-card" style="--r:-2deg;">
-              <div class="create-social-thumb"></div>
-              <div class="create-social-line"></div>
-              <div class="create-social-line short"></div>
-            </div>
-          </div>
-          <div class="create-panel-body">
-            <span class="create-panel-tag">Brand</span>
-            <h3 class="create-panel-title">Social content &amp; creative campaigns</h3>
-            <p class="create-panel-desc">Feed-ready posts, reels, and ad creative that keep a brand consistent across every platform it shows up on.</p>
+          <div class="create-media" aria-hidden="true" style="position:absolute; inset:0; z-index:0; border-radius:inherit; overflow:hidden;">
+            <video src="assets/home/videos/social-content-showreel.mp4" autoplay muted loop playsinline style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"></video>
           </div>
         </div>
 
         <div class="create-panel reveal reveal-stagger">
           <div class="create-panel-visual create-visual-web" aria-hidden="true">
-            <svg viewBox="0 0 140 100" fill="none" width="100%"><rect x="1" y="1" width="138" height="98" rx="10" fill="var(--white)" stroke="var(--border)"/><rect x="1" y="1" width="138" height="20" rx="10" fill="var(--surface)"/><circle cx="14" cy="11" r="3" fill="var(--border)"/><circle cx="24" cy="11" r="3" fill="var(--border)"/><circle cx="34" cy="11" r="3" fill="var(--border)"/><rect x="14" y="32" width="80" height="6" rx="3" fill="var(--border)"/><rect x="14" y="44" width="54" height="6" rx="3" fill="var(--border)"/><rect x="14" y="60" width="112" height="26" rx="7" fill="var(--primary-light)"/></svg>
+            <img src="assets/home/images/web-services-mockup.jpg" alt="" width="280" height="200" loading="lazy">
           </div>
           <div class="create-panel-body">
             <span class="create-panel-tag">Web</span>
@@ -418,7 +425,7 @@
 
         <div class="create-panel reveal reveal-stagger">
           <div class="create-panel-visual create-visual-app" aria-hidden="true">
-            <svg viewBox="0 0 60 100" fill="none" width="100%"><rect x="1" y="1" width="58" height="98" rx="14" fill="var(--white)" stroke="var(--border)"/><rect x="20" y="8" width="20" height="4" rx="2" fill="var(--border)"/><rect x="9" y="24" width="42" height="30" rx="8" fill="var(--primary-light)"/><rect x="9" y="60" width="42" height="7" rx="3.5" fill="var(--border)"/><rect x="9" y="72" width="26" height="7" rx="3.5" fill="var(--border)"/></svg>
+            <img src="assets/home/images/mobile-app-business.png" alt="" width="200" height="340" loading="lazy">
           </div>
           <div class="create-panel-body">
             <span class="create-panel-tag">App</span>

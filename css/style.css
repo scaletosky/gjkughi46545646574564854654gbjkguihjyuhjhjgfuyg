@@ -1454,6 +1454,10 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   transition: transform var(--transition), box-shadow var(--transition);
 }
 .create-panel:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
+.create-panel:has(.create-visual-web),
+.create-panel:has(.create-visual-app) {
+  min-height: 300px;
+}
 .create-panel-featured {
   grid-row: span 2;
   min-height: 552px;
@@ -1515,11 +1519,49 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
 .create-social-line { height: 5px; border-radius: 3px; background: var(--border); margin-bottom: 5px; }
 .create-social-line.short { width: 60%; }
 
-/* Web sub-panel visual */
-.create-visual-web { position: absolute; bottom: 22px; right: 22px; width: 140px; opacity: 0.9; }
-
-/* App sub-panel visual */
-.create-visual-app { position: absolute; bottom: 22px; right: 26px; width: 58px; opacity: 0.9; }
+/* Web sub-panel visual: full-bleed background photo with legibility overlay */
+.create-visual-web,
+.create-visual-app {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+}
+.create-visual-web img,
+.create-visual-app img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: cover;
+  object-position: center;
+}
+.create-visual-web::after,
+.create-visual-app::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 8, 20, 0.05) 0%, rgba(10, 8, 20, 0.12) 45%, rgba(10, 8, 20, 0.72) 100%);
+}
+.create-panel:has(.create-visual-web) .create-panel-body,
+.create-panel:has(.create-visual-app) .create-panel-body {
+  position: relative;
+  z-index: 1;
+}
+.create-panel:has(.create-visual-web) .create-panel-tag,
+.create-panel:has(.create-visual-app) .create-panel-tag {
+  color: #E8DEFF;
+}
+.create-panel:has(.create-visual-web) .create-panel-title,
+.create-panel:has(.create-visual-app) .create-panel-title {
+  color: #FFFFFF;
+}
+.create-panel:has(.create-visual-web) .create-panel-desc,
+.create-panel:has(.create-visual-app) .create-panel-desc {
+  color: rgba(255, 255, 255, 0.82);
+}
 
 /* Content sub-panel visual */
 .create-visual-content { position: absolute; bottom: 22px; right: 22px; width: 90px; opacity: 0.9; }
