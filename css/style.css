@@ -192,7 +192,9 @@ p.lead {
   box-shadow: 0 14px 32px rgba(168, 45, 190, 0.42);
 }
 
-/* Continuous playful "jump/giggle" bounce on the header Book a Call button */
+/* Continuous playful "jump/giggle" bounce — now applied to every
+   primary CTA button, on both mobile and desktop, not just the
+   header "Book a Call" button. */
 @keyframes btn-giggle {
   0%, 60%, 100% { transform: translateY(0) rotate(0deg); }
   65% { transform: translateY(-10px) rotate(-6deg); }
@@ -202,14 +204,17 @@ p.lead {
   85% { transform: translateY(-3px) rotate(-2deg); }
   90%, 100% { transform: translateY(0) rotate(0deg); }
 }
+.btn-primary,
 .btn-giggle {
   animation: btn-giggle 1.1s ease-in-out infinite;
   transform-origin: center bottom;
 }
+.btn-primary:hover,
 .btn-giggle:hover {
   animation-play-state: paused;
 }
 @media (prefers-reduced-motion: reduce) {
+  .btn-primary,
   .btn-giggle { animation: none; }
 }
 
@@ -5118,36 +5123,31 @@ body.modal-open {
     gap: 12px;
   }
   .industry-row {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "num"
-      "title"
-      "desc"
-      "media";
+    display: flex;
+    flex-direction: column;
     row-gap: 6px;
     padding: 18px 18px;
     width: 100%;
   }
   .industry-row-num {
-    grid-area: num;
     width: 100%;
   }
   .industry-row-icon { width: 34px; height: 34px; border-radius: 10px; }
   .industry-row-icon svg { width: 16px; height: 16px; }
   .industry-row-title {
-    grid-area: title;
     font-size: 1.05rem;
     width: 100%;
+    min-width: 0;
   }
   .industry-row-desc {
-    grid-area: desc;
     font-size: 0.875rem;
     line-height: 1.5;
     width: 100%;
     max-width: 100%;
+    min-width: 0;
+    overflow-wrap: break-word;
   }
   .industry-media {
-    grid-area: media;
     aspect-ratio: 16 / 9;
     margin-top: 6px;
     width: 100%;
