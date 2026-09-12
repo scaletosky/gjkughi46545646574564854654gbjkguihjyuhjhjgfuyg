@@ -6599,10 +6599,20 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 @media (max-width: 640px) {
   /* Article body: slightly smaller type than desktop but generous
      line-height and paragraph spacing so long-form content breathes
-     on a narrow screen instead of reading as one dense block. */
+     on a narrow screen instead of reading as one dense block.
+     Paragraphs are justified for a clean edge on both sides —
+     hyphenation is enabled alongside it so justification doesn't
+     force unusually large gaps between words on narrow lines. */
   .blog-article-body {
     font-size: 1rem;
-    line-height: 1.75;
+    line-height: 1.95;
+  }
+  .blog-article-body p,
+  .blog-article-body li {
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
+    -webkit-hyphens: auto;
   }
   .blog-article-body p { margin-bottom: 1.3em; }
   .blog-article-body h2[data-section-number] { margin-top: 2.6em; }
@@ -6625,11 +6635,21 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
     padding: 20px 20px;
   }
 
-  /* Header block: tighter but still airy on small screens */
-  .blog-article-category { margin-bottom: 16px; }
-  .blog-article-title { margin-bottom: 16px; }
-  .blog-article-excerpt { margin-bottom: 22px; }
-  .blog-article-meta { margin-bottom: 30px; padding-bottom: 24px; }
+  /* Header block: tighter but still airy on small screens, and
+     center-aligned — badge, title, excerpt, and meta all sit centered
+     as a block, matching how the reading column itself is centered
+     on the page rather than pinned to the left edge. */
+  .blog-breadcrumbs { justify-content: center; }
+  .blog-article-category {
+    display: block;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 16px;
+  }
+  .blog-article-title { text-align: center; margin-bottom: 16px; }
+  .blog-article-excerpt { text-align: center; margin-left: auto; margin-right: auto; margin-bottom: 22px; }
+  .blog-article-meta { justify-content: center; margin-bottom: 30px; padding-bottom: 24px; }
 }
 
 /* ============================================================
