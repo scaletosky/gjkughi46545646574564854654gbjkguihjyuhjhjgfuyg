@@ -511,12 +511,15 @@
     var toc = built.toc;
 
     // ---- Breadcrumbs ----
+    var crumbSep = '<span class="blog-breadcrumb-sep" aria-hidden="true">' +
+      '<svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</span>';
     var breadcrumbs =
       '<nav class="blog-breadcrumbs" aria-label="Breadcrumb">' +
-      '<a href="/index.html">Home</a> &rsaquo; ' +
+      '<a href="/index.html">Home</a>' + crumbSep +
       '<a href="/blog.html">Blog</a>' +
-      (cat ? ' &rsaquo; <a href="/blog.html#' + escapeHtml(cat.slug) + '">' + escapeHtml(catName) + '</a>' : '') +
-      ' &rsaquo; <span aria-current="page">' + escapeHtml(a.title) + '</span>' +
+      (cat ? crumbSep + '<a href="/blog.html#' + escapeHtml(cat.slug) + '">' + escapeHtml(catName) + '</a>' : '') +
+      crumbSep + '<span aria-current="page">' + escapeHtml(a.title) + '</span>' +
       '</nav>';
 
     // ---- Article header ----
@@ -540,14 +543,15 @@
         '" width="1200" height="675" fetchpriority="high"></div>'
       : '';
 
-    // ---- TOC (sidebar on desktop, collapsible card on mobile) ----
+    // ---- TOC (collapsible block, inline above the article body on
+    // every screen size — see Phase 15 note in style.css for why the
+    // old sticky-sidebar layout was retired). ----
     var tocBlock = toc.length
       ? '<div class="blog-toc" id="blog-toc">' +
         '<button type="button" class="blog-toc-mobile-toggle" aria-expanded="false" aria-controls="blog-toc-list">' +
         'On this page' +
         '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
-        '<span class="blog-toc-label">On this page</span>' +
         '<nav class="blog-toc-list" id="blog-toc-list" aria-label="Table of contents">' +
         '<div class="blog-toc-list-inner">' + tocHtml(toc) + '</div>' +
         '</nav>' +
@@ -713,13 +717,13 @@
       orientationBlock +
       '<div class="blog-article-layout">' +
       '<div class="blog-article-main">' +
+      tocBlock +
       '<div class="blog-article-body">' + contentHtml + '</div>' +
       shareHtml +
       prevNextHtml +
       faqHtml +
       relatedHtml +
       '</div>' +
-      '<aside class="blog-article-aside">' + tocBlock + '</aside>' +
       '</div>' +
       finalCta;
 

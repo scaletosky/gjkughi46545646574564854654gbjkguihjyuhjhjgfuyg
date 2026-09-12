@@ -192,9 +192,8 @@ p.lead {
   box-shadow: 0 14px 32px rgba(168, 45, 190, 0.42);
 }
 
-/* Continuous playful "jump/giggle" bounce — now applied to every
-   primary CTA button, on both mobile and desktop, not just the
-   header "Book a Call" button. */
+/* Continuous playful "jump/giggle" bounce — reserved for the header
+   "Book a Call" button (.btn-giggle) only. */
 @keyframes btn-giggle {
   0%, 60%, 100% { transform: translateY(0) rotate(0deg); }
   65% { transform: translateY(-10px) rotate(-6deg); }
@@ -204,15 +203,31 @@ p.lead {
   85% { transform: translateY(-3px) rotate(-2deg); }
   90%, 100% { transform: translateY(0) rotate(0deg); }
 }
-.btn-primary,
 .btn-giggle {
   animation: btn-giggle 1.1s ease-in-out infinite;
   transform-origin: center bottom;
 }
-.btn-primary:hover,
 .btn-giggle:hover {
   animation-play-state: paused;
 }
+
+/* Slower, occasional bounce for every other primary CTA button — a
+   single gentle hop every few seconds instead of a constant jiggle. */
+@keyframes btn-giggle-slow {
+  0%, 82%, 100% { transform: translateY(0) rotate(0deg); }
+  86% { transform: translateY(-8px) rotate(-4deg); }
+  90% { transform: translateY(0) rotate(3deg); }
+  94% { transform: translateY(-3px) rotate(-2deg); }
+  97% { transform: translateY(0) rotate(0deg); }
+}
+.btn-primary:not(.btn-giggle) {
+  animation: btn-giggle-slow 7s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+.btn-primary:not(.btn-giggle):hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn-primary,
   .btn-giggle { animation: none; }
@@ -6063,11 +6078,56 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 .blog-article-notfound h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: 12px; }
 .blog-article-notfound p { color: var(--muted); margin-bottom: 28px; }
 
-/* ---- Breadcrumbs ---- */
-.blog-breadcrumbs { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; }
-.blog-breadcrumbs a { color: var(--muted); text-decoration: none; }
+/* ---- Article shell width ----
+   Everything the article renders — breadcrumbs, header, featured
+   image, orientation cards, and the reading column itself — shares
+   one consistent centered width, rather than the header spanning the
+   full page container while the body below sits in a narrower column. */
+#blog-article-root {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* ---- Breadcrumbs ----
+   A quiet, premium wayfinding strip: each segment is a distinct
+   pill-like chip rather than plain underlined text, with a light
+   separator and a clear visual endpoint at the current page. */
+.blog-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+.blog-breadcrumbs a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--transition);
+}
 .blog-breadcrumbs a:hover { color: var(--primary-dark); }
-.blog-breadcrumbs span[aria-current] { color: var(--text); }
+.blog-breadcrumbs .blog-breadcrumb-sep {
+  color: var(--border);
+  font-size: 0.9em;
+  display: inline-flex;
+}
+.blog-breadcrumbs span[aria-current] {
+  color: var(--text);
+  font-weight: 600;
+  /* Long article titles are the last, most likely segment to wrap on
+     narrow screens — clip it instead so the trail stays one tidy
+     line rather than breaking the whole strip across several. */
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .blog-breadcrumbs span[aria-current] { max-width: 180px; }
+}
 
 /* ---- Article header ---- */
 .blog-article-category {
@@ -6080,20 +6140,20 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   background: var(--primary-light);
   padding: 6px 14px;
   border-radius: 100px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .blog-article-title {
   font-size: clamp(2rem, 4vw, 2.9rem);
   letter-spacing: -0.02em;
-  line-height: 1.15;
-  margin-bottom: 16px;
+  line-height: 1.18;
+  margin-bottom: 20px;
 }
 .blog-article-excerpt {
-  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+  font-size: clamp(1.0625rem, 1.4vw, 1.2rem);
   color: var(--muted);
-  line-height: 1.6;
-  max-width: 68ch;
-  margin-bottom: 24px;
+  line-height: 1.65;
+  max-width: 62ch;
+  margin-bottom: 28px;
 }
 .blog-article-meta {
   display: flex;
@@ -6102,7 +6162,9 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   gap: 8px 10px;
   color: var(--muted);
   font-size: 0.9rem;
-  margin-bottom: 36px;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
 }
 .blog-article-meta .dot { opacity: 0.5; }
 .blog-article-meta .updated { color: var(--muted); }
@@ -6121,124 +6183,117 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
 
-/* ---- Main layout: content + sticky TOC sidebar ----
-   Phase 13: previously `minmax(0, 1fr) 260px` let the main track
-   stretch to fill the container while .blog-article-main capped
-   itself at 720px, leaving a large dead gap between the narrow
-   text column and the TOC on wide screens. The main track now
-   grows with the container (1fr) up to a reading-column cap of
-   850px via .blog-article-main's own max-width, so it uses
-   the extra space instead of leaving it empty, while still
-   shrinking fluidly (rather than overflowing) at container widths
-   between the 980px breakpoint and the ~1240px point where a full
-   850px column first fits alongside the 260px TOC. */
+/* ---- Main layout: single centered reading column ----
+   Phase 15: the two-column grid (article + sticky sidebar TOC) is
+   retired. A sticky sidebar only works cleanly when its own content
+   is roughly as tall as the article next to it — on long articles it
+   finishes scrolling early and leaves a large, unstyled empty gap
+   underneath for the rest of the page (visible on articles like this
+   one). Rather than patch around that with sidebar filler, the TOC
+   now sits inline, as a collapsible block directly above the article
+   body — same treatment on every screen size. This also means the
+   full container width goes to a single, wider, deliberately-set
+   reading column instead of being split into a wide/narrow pair. */
 .blog-article-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 56px;
-  align-items: start;
+  width: 100%;
 }
-.blog-article-main { min-width: 0; max-width: 850px; }
-.blog-article-aside { min-width: 0; }
+.blog-article-main { min-width: 0; }
 
-/* ---- Table of contents ---- */
+/* ---- Table of contents ---- now a collapsible block that sits
+   inline above the article body on every screen size, not a sidebar. */
 .blog-toc {
-  position: sticky;
-  top: calc(var(--header-h) + 24px);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 22px 22px 20px;
+  padding: 4px 22px;
   background: var(--surface);
+  margin-bottom: 40px;
 }
-.blog-toc-label {
+.blog-toc-label { display: none; }
+.blog-toc-mobile-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 18px 0;
+  text-align: left;
   font-family: var(--font-display);
-  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 14px;
-  display: block;
+  font-size: 0.9375rem;
+  color: var(--text);
 }
-.blog-toc-list { display: flex; flex-direction: column; gap: 2px; }
-.blog-toc-list a {
+.blog-toc-mobile-toggle svg { transition: transform var(--transition); flex-shrink: 0; }
+.blog-toc.is-open .blog-toc-mobile-toggle svg { transform: rotate(180deg); }
+.blog-toc-list {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 380ms cubic-bezier(.2,.8,.2,1);
+  overflow: hidden;
+}
+.blog-toc.is-open .blog-toc-list { grid-template-rows: 1fr; padding-bottom: 16px; }
+.blog-toc-list-inner {
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 16px;
+}
+.blog-toc-list-inner a {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--muted);
   text-decoration: none;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-radius: 8px;
   border-left: 2px solid transparent;
   transition: color var(--transition), background var(--transition), border-color var(--transition);
-  line-height: 1.4;
+  line-height: 1.45;
 }
-.blog-toc-list a:hover { background: var(--white); color: var(--text); }
-.blog-toc-list a.is-active { color: var(--primary-dark); border-left-color: var(--primary); background: var(--white); font-weight: 600; }
-.blog-toc-list .blog-toc-sub { padding-left: 22px; font-size: 0.8125rem; }
+.blog-toc-list-inner a:hover { background: var(--white); color: var(--text); }
+.blog-toc-list-inner a.is-active { color: var(--primary-dark); border-left-color: var(--primary); background: var(--white); font-weight: 600; }
+.blog-toc-list-inner .blog-toc-sub-list { grid-column: 1 / -1; display: flex; flex-direction: column; }
+.blog-toc-list-inner .blog-toc-sub { padding-left: 24px; font-size: 0.8125rem; }
 
-/* Mobile TOC: collapsible card above the article body */
-.blog-toc-mobile-toggle { display: none; }
-
-@media (max-width: 980px) {
-  .blog-article-layout { grid-template-columns: 1fr; gap: 0; }
-  .blog-article-aside { order: -1; margin-bottom: 32px; }
-  .blog-toc {
-    position: static;
-    padding: 4px 18px;
-  }
-  .blog-toc-label { display: none; }
-  .blog-toc-mobile-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 16px 0;
-    text-align: left;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.9375rem;
-    color: var(--text);
-  }
-  .blog-toc-mobile-toggle svg { transition: transform var(--transition); flex-shrink: 0; }
-  .blog-toc.is-open .blog-toc-mobile-toggle svg { transform: rotate(180deg); }
-  .blog-toc-list {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 380ms cubic-bezier(.2,.8,.2,1);
-  }
-  .blog-toc-list { overflow: hidden; }
-  .blog-toc.is-open .blog-toc-list { grid-template-rows: 1fr; padding-bottom: 14px; }
-  .blog-toc-list-inner { overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+@media (max-width: 640px) {
+  .blog-toc-list-inner { grid-template-columns: 1fr; }
 }
 
-/* ---- Article content typography ---- */
-.blog-article-body { line-height: 1.8; font-size: 1.0625rem; color: var(--text); }
+/* ---- Article content typography ----
+   Reading-optimised: comfortable measure, generous line-height, and a
+   clear rhythm between paragraphs/headings so long-form content reads
+   like a premium editorial piece rather than a dense wall of text. */
+.blog-article-body {
+  line-height: 1.85;
+  font-size: 1.0625rem;
+  color: var(--text);
+}
 .blog-article-body > *:first-child { margin-top: 0; }
 .blog-article-body h2 {
   scroll-margin-top: calc(var(--header-h) + 24px);
-  font-size: clamp(1.3rem, 2vw, 1.6rem);
-  margin: 52px 0 16px;
+  font-size: clamp(1.375rem, 2.2vw, 1.75rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 3.25em 0 0.85em;
   padding-top: 4px;
 }
 .blog-article-body h3 {
   scroll-margin-top: calc(var(--header-h) + 24px);
-  font-size: clamp(1.1rem, 1.5vw, 1.25rem);
-  margin: 34px 0 12px;
+  font-size: clamp(1.125rem, 1.6vw, 1.3rem);
+  line-height: 1.35;
+  margin: 2.1em 0 0.7em;
 }
-.blog-article-body p { margin: 0 0 18px; }
+.blog-article-body p { margin: 0 0 1.4em; }
 .blog-article-body p.blog-lead {
   font-size: 1.1875rem;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--text);
   font-weight: 400;
-  margin-bottom: 28px;
+  margin-bottom: 1.6em;
 }
 .blog-article-body ul,
-.blog-article-body ol { margin: 0 0 18px; padding-left: 1.4em; display: flex; flex-direction: column; gap: 8px; }
+.blog-article-body ol { margin: 0 0 1.4em; padding-left: 1.3em; display: flex; flex-direction: column; gap: 0.65em; }
 .blog-article-body ul { list-style: disc; }
 .blog-article-body ol { list-style: decimal; }
-.blog-article-body li { padding-left: 4px; }
+.blog-article-body li { padding-left: 4px; line-height: 1.7; }
 .blog-article-body li::marker { color: var(--primary); }
 .blog-article-body a:not(.btn) { color: var(--primary-dark); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .blog-article-body a:not(.btn):hover { color: var(--primary); }
@@ -6247,18 +6302,18 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 .blog-article-body strong { font-weight: 700; }
 .blog-article-body em { font-style: italic; }
 .blog-article-body blockquote {
-  margin: 28px 0;
-  padding: 4px 0 4px 22px;
+  margin: 2em 0;
+  padding: 6px 0 6px 24px;
   border-left: 3px solid var(--primary);
   color: var(--muted);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-style: italic;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 .blog-article-body blockquote p { margin: 0; }
 
 /* ---- Images inside content ---- */
-.blog-article-body figure { margin: 32px 0; }
+.blog-article-body figure { margin: 2.4em 0; }
 .blog-article-body figure img {
   width: 100%;
   border-radius: var(--radius-sm);
@@ -6272,7 +6327,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 
 /* ---- Tables ---- */
 .blog-table-wrap {
-  margin: 28px 0;
+  margin: 2.2em 0;
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -6286,9 +6341,10 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 }
 .blog-article-body th,
 .blog-article-body td {
-  padding: 12px 16px;
+  padding: 14px 18px;
   text-align: left;
   border-bottom: 1px solid var(--border);
+  line-height: 1.55;
 }
 .blog-article-body th {
   font-family: var(--font-display);
@@ -6300,8 +6356,8 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 
 /* ---- Callouts ---- */
 .blog-callout {
-  margin: 28px 0;
-  padding: 20px 22px;
+  margin: 2.2em 0;
+  padding: 22px 24px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -6317,15 +6373,15 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   color: var(--primary-dark);
   margin-bottom: 8px;
 }
-.blog-callout p { margin: 0; color: var(--text); font-size: 0.9375rem; }
+.blog-callout p { margin: 0; color: var(--text); font-size: 0.9375rem; line-height: 1.65; }
 .blog-callout p + p { margin-top: 10px; }
 .blog-callout--warning { border-left-color: #C7433D; background: #FBF2F1; }
 .blog-callout--warning .blog-callout-label { color: #C7433D; }
 
 /* ---- Inline CTA (mid-article) ---- */
 .blog-inline-cta {
-  margin: 40px 0;
-  padding: 28px 30px;
+  margin: 3em 0;
+  padding: 30px 32px;
   border-radius: var(--radius-md);
   background: var(--primary-light);
   display: flex;
@@ -6334,8 +6390,8 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   justify-content: space-between;
   gap: 20px;
 }
-.blog-inline-cta-text h3 { font-size: 1.1rem; margin-bottom: 4px; }
-.blog-inline-cta-text p { margin: 0; color: var(--muted); font-size: 0.9375rem; max-width: 46ch; }
+.blog-inline-cta-text h3 { font-size: 1.1rem; margin-bottom: 6px; line-height: 1.4; }
+.blog-inline-cta-text p { margin: 0; color: var(--muted); font-size: 0.9375rem; line-height: 1.55; max-width: 46ch; }
 .blog-inline-cta .btn { flex-shrink: 0; }
 
 /* ---- Share row ---- */
@@ -6375,10 +6431,10 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
-@media (max-width: 980px) {
+@media (max-width: 720px) {
   .blog-related-grid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .blog-related-grid { grid-template-columns: 1fr; }
 }
 
@@ -6432,9 +6488,8 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 .blog-article-orientation {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 780px;
-  margin: 0 0 48px;
+  gap: 18px;
+  margin: 0 0 52px;
 }
 
 .blog-quick-answer,
@@ -6443,7 +6498,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface);
-  padding: 24px 28px;
+  padding: 26px 30px;
 }
 
 .blog-quick-answer-label,
@@ -6456,7 +6511,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--primary-dark);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .blog-quick-answer {
@@ -6466,7 +6521,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 .blog-quick-answer p {
   margin: 0;
   font-size: 1.0625rem;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--text);
 }
 
@@ -6477,14 +6532,14 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .blog-at-a-glance li,
 .blog-key-takeaways li {
   position: relative;
   padding-left: 26px;
   font-size: 0.9375rem;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--text);
 }
 .blog-at-a-glance li::before,
@@ -6509,7 +6564,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 .blog-article-body h2[data-section-number] {
   position: relative;
   padding-top: 0;
-  margin-top: 60px;
+  margin-top: 3.6em;
 }
 .blog-article-body h2[data-section-number]::before {
   content: attr(data-section-number);
@@ -6520,7 +6575,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   letter-spacing: 0.08em;
   color: var(--primary);
   opacity: 0.7;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .blog-article-body h2[data-section-number="01"] { margin-top: 8px; }
 
@@ -6534,7 +6589,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   letter-spacing: 0.02em;
   color: var(--muted);
   text-transform: uppercase;
-  margin: 56px 0 8px;
+  margin: 3.4em 0 0.5em;
 }
 .blog-article-body h2.blog-h2-faq-lead + p {
   color: var(--muted);
@@ -6542,13 +6597,39 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 }
 
 @media (max-width: 640px) {
+  /* Article body: slightly smaller type than desktop but generous
+     line-height and paragraph spacing so long-form content breathes
+     on a narrow screen instead of reading as one dense block. */
+  .blog-article-body {
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  .blog-article-body p { margin-bottom: 1.3em; }
+  .blog-article-body h2[data-section-number] { margin-top: 2.6em; }
+  .blog-article-body h2[data-section-number="01"] { margin-top: 6px; }
+  .blog-article-body h2 { margin: 2.6em 0 0.7em; }
+  .blog-article-body h3 { margin: 1.8em 0 0.6em; }
+  .blog-article-body ul,
+  .blog-article-body ol { margin-bottom: 1.3em; gap: 0.6em; }
+  .blog-article-body blockquote { margin: 1.8em 0; font-size: 1.05rem; }
+  .blog-article-body figure { margin: 2em 0; }
+  .blog-table-wrap { margin: 2em 0; }
+  .blog-callout { margin: 2em 0; padding: 18px 20px; }
+  .blog-inline-cta { margin: 2.6em 0; padding: 24px 22px; }
+
+  /* Orientation cards (Quick Answer / At a Glance / Key Takeaways) */
+  .blog-article-orientation { gap: 14px; margin-bottom: 40px; }
   .blog-quick-answer,
   .blog-at-a-glance,
   .blog-key-takeaways {
     padding: 20px 20px;
   }
-  .blog-article-body h2[data-section-number] { margin-top: 44px; }
-  .blog-article-body h2[data-section-number="01"] { margin-top: 8px; }
+
+  /* Header block: tighter but still airy on small screens */
+  .blog-article-category { margin-bottom: 16px; }
+  .blog-article-title { margin-bottom: 16px; }
+  .blog-article-excerpt { margin-bottom: 22px; }
+  .blog-article-meta { margin-bottom: 30px; padding-bottom: 24px; }
 }
 
 /* ============================================================
