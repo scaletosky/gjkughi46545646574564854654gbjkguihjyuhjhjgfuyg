@@ -396,6 +396,7 @@ function initContactForm() {
   const validators = {
     name: (v) => v.trim().length >= 2 || 'Please enter your full name.',
     email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) || 'Enter a valid email address.',
+    phone: (v) => !v.trim() || /^[+()\-.\s\d]{6,30}$/.test(v.trim()) || 'Please enter a valid phone number.',
     service: (v) => v !== '' || 'Please select a service.',
     message: (v) => v.trim().length >= 20 || 'Tell us a bit more — at least 20 characters.'
   };
@@ -489,8 +490,10 @@ function initContactForm() {
         body: JSON.stringify({
           name: formData.name || '',
           email: formData.email || '',
+          phone: formData.phone || '',
           company: formData.company || '',
           service: formData.service || '',
+          budget: formData.budget || '',
           message: formData.message || '',
         }),
       });

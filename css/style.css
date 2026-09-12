@@ -5021,10 +5021,15 @@ body.modal-open {
    ============================================================ */
 .industries-list {
   max-width: 920px;
+  width: 100%;
   margin: 48px auto 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+.industries-list .industry-row {
+  width: 100%;
+  min-width: 0;
 }
 .industry-row {
   display: grid;
@@ -5113,7 +5118,7 @@ body.modal-open {
     gap: 12px;
   }
   .industry-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "num"
       "title"
@@ -5121,23 +5126,31 @@ body.modal-open {
       "media";
     row-gap: 6px;
     padding: 18px 18px;
+    width: 100%;
   }
-  .industry-row-num { grid-area: num; }
+  .industry-row-num {
+    grid-area: num;
+    width: 100%;
+  }
   .industry-row-icon { width: 34px; height: 34px; border-radius: 10px; }
   .industry-row-icon svg { width: 16px; height: 16px; }
   .industry-row-title {
     grid-area: title;
     font-size: 1.05rem;
+    width: 100%;
   }
   .industry-row-desc {
     grid-area: desc;
     font-size: 0.875rem;
     line-height: 1.5;
+    width: 100%;
+    max-width: 100%;
   }
   .industry-media {
     grid-area: media;
     aspect-ratio: 16 / 9;
     margin-top: 6px;
+    width: 100%;
   }
 }
 
