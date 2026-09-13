@@ -5469,6 +5469,7 @@ body.modal-open {
   position: relative;
 }
 .svc-timeline[data-steps="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.svc-timeline[data-steps="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 40px; }
 .svc-timeline-step {
   position: relative;
   padding: 0 20px 0 0;
@@ -5648,6 +5649,139 @@ body.modal-open {
   .svc-goodknow-title { font-size: 0.9375rem; }
   .svc-goodknow-sub { display: none; }
 }
+
+/* ---- Scope groups: grouped "what's included" cards (Strategy / Content / Management / Growth) ---- */
+.svc-scope-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.svc-scope-card {
+  padding: 30px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+.svc-scope-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.svc-scope-card-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.svc-scope-card h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.svc-scope-card > p {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+.svc-scope-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.svc-scope-tags span {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 13px;
+}
+@media (max-width: 780px) {
+  .svc-scope-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Content types: format rows (Reels, Carousels, Stories, etc.) ---- */
+.svc-format-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.svc-format-item {
+  background: var(--white);
+  padding: 24px 26px;
+}
+.svc-format-item h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.svc-format-item p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+@media (max-width: 780px) {
+  .svc-format-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Qualification split: "best for" / "may not need" two-column list ---- */
+.svc-qualify-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.svc-qualify-col {
+  padding: 26px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+.svc-qualify-col h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.svc-qualify-col ul { display: flex; flex-direction: column; gap: 10px; }
+.svc-qualify-col li {
+  font-size: 0.9375rem;
+  color: var(--text);
+  line-height: 1.55;
+  padding-left: 20px;
+  position: relative;
+}
+.svc-qualify-col li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.svc-qualify-col.is-secondary li::before { background: var(--muted); opacity: 0.6; }
+@media (max-width: 780px) {
+  .svc-qualify-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Inline blog-link callout used inside long-form service sections ---- */
+.svc-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-top: 14px;
+}
+.svc-inline-link svg { flex-shrink: 0; }
+.svc-inline-link:hover { color: var(--primary); }
 
 /* ---- 09 Common mistakes: numbered editorial rows ---- */
 .svc-mistakes {
