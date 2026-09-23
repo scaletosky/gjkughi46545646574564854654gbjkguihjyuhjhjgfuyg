@@ -4517,6 +4517,7 @@ body.modal-open {
   height: 100%;
   object-fit: cover;
   display: block;
+  border: none; /* neutralizes default iframe border for YouTube embeds */
 }
 
 @media (max-width: 768px) {
@@ -4676,6 +4677,7 @@ body.modal-open {
   height: 100%;
   object-fit: cover;
   display: block;
+  border: none; /* neutralizes default iframe border for YouTube embeds */
 }
 .case-study-page .cs-gallery-caption {
   margin-top: 12px;
