@@ -282,6 +282,22 @@
     return null;
   }
 
+  // Recognizes YouTube URLs in any common form (watch?v=, youtu.be/,
+  // shorts/, embed/) and pulls out the 11-character video ID. Returns
+  // null for anything else, including plain uploaded video paths, so
+  // those keep using the native <video> element untouched.
+  function getYouTubeId(url) {
+    if (!url || typeof url !== 'string') return null;
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    ];
+    for (const re of patterns) {
+      const match = url.match(re);
+      if (match) return match[1];
+    }
+    return null;
+  }
+
   function renderMainMedia(project) {
     const wrap = document.getElementById('cs-main-media');
     if (!wrap) return;
@@ -345,6 +361,18 @@
     if (project.video) {
       const youtubeId = getYouTubeId(project.video);
 
+      if (youtubeId) {
+        const embedSrc = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?rel=0&modestbranding=1&playsinline=1`;
+        wrap.innerHTML = `<iframe class="cs-hero-media" src="${embedSrc}" title="${alt}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        return;
+      }
+
+      // Otherwise, treat it as a direct uploaded video file, as before.
+      const youtubeId = getYouTubeId(project.video);
+
+      // YouTube link — embed via iframe. YouTube handles encoding,
+      // adaptive bitrate, and playback compatibility itself, so this
+      // sidesteps local codec/hardware-decode issues entirely.
       if (youtubeId) {
         const embedSrc = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?rel=0&modestbranding=1&playsinline=1`;
         wrap.innerHTML = `<iframe class="cs-hero-media" src="${embedSrc}" title="${alt}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
