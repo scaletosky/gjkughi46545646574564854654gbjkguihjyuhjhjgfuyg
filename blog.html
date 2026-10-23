@@ -204,7 +204,7 @@
      scroll behavior — none of that touches window.STSKAnalytics except
      inside the already-null-guarded contact-form submit handler, which
      this page never triggers (no .contact-form exists here). -->
-<script>window.STSK_API_BASE = "https://scale-to-sky-real-backend.onrender.com";</script>
+<script>window.STSK_API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? (window.location.protocol + "//" + window.location.hostname + ":5000") : "https://scale-to-sky-real-backend.onrender.com";</script>
 <script src="js/main.js"></script>
 
 <!-- Blog data: category list, then all 60 article records, then the

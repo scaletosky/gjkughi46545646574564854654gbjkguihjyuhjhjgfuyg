@@ -1,11 +1,10 @@
 /* ============================================================
-   PHASE 7 — Public Portfolio page content management
-   Fetches page content (hero/work strip/featured/all projects/
-   filters/testimonial/CTA) and published projects from the Super
-   Admin backend, and renders the full Portfolio page dynamically.
-   Builds on the Phase 3 filtering/rendering approach — still does
-   not touch main.js, still implements its own lightweight filter
-   binding scoped to this page's dynamically-created cards.
+   Public Portfolio page.
+   Only the projects come from the Super Admin backend
+   (GET /api/portfolio — published projects). All page copy
+   (hero, headings, filters, CTA) is static HTML in portfolio.html.
+   Renders the Featured Work section (featured projects, max 3),
+   the All Projects grid and the category filters.
    ============================================================ */
 
 (function () {
@@ -36,51 +35,16 @@
   const emptyStateEl = document.getElementById('portfolio-empty-state');
   const noFilterResultsEl = document.getElementById('portfolio-no-filter-results');
   const filterBar = document.getElementById('portfolio-filter-bar');
-  const allProjectsSection = document.getElementById('portfolio-work');
-  const allProjectsHeadingWrap = document.getElementById('portfolio-allprojects-heading-wrap');
-  const allProjectsKickerEl = document.getElementById('portfolio-allprojects-kicker');
-  const allProjectsHeadingEl = document.getElementById('portfolio-allprojects-heading');
-  const allProjectsDescriptionEl = document.getElementById('portfolio-allprojects-description');
-
   if (!grid) return; // not on the portfolio page
-
-  // ---- Hero elements ----
-  const heroSection = document.getElementById('portfolio-hero-section');
-  const heroKickerEl = document.getElementById('portfolio-hero-kicker');
-  const heroHeadingEl = document.getElementById('portfolio-hero-heading');
-  const heroDescriptionEl = document.getElementById('portfolio-hero-description');
-  const heroSupportingEl = document.getElementById('portfolio-hero-supporting');
-  const heroCtaEl = document.getElementById('portfolio-hero-cta');
-
-  // ---- Work/Trust strip elements ----
-  const workStripSection = document.getElementById('portfolio-workstrip-section');
-  const workStripGrid = document.getElementById('portfolio-workstrip-grid');
 
   // ---- Featured Work elements ----
   const featuredSection = document.getElementById('portfolio-featured-section');
-  const featuredKickerEl = document.getElementById('portfolio-featured-kicker');
-  const featuredHeadingEl = document.getElementById('portfolio-featured-heading');
-  const featuredDescriptionEl = document.getElementById('portfolio-featured-description');
   const featuredGrid = document.getElementById('portfolio-featured-grid');
-
-  // ---- Testimonial elements ----
-  const testimonialSection = document.getElementById('portfolio-testimonial-section');
-  const testimonialKickerEl = document.getElementById('portfolio-testimonial-kicker');
-  const testimonialHeadingEl = document.getElementById('portfolio-testimonial-heading');
-  const testimonialQuoteEl = document.getElementById('portfolio-testimonial-quote');
-  const testimonialAvatarEl = document.getElementById('portfolio-testimonial-avatar');
-  const testimonialNameEl = document.getElementById('portfolio-testimonial-name');
-  const testimonialRoleEl = document.getElementById('portfolio-testimonial-role');
-
-  // ---- Final CTA elements ----
-  const ctaSection = document.getElementById('portfolio-cta-section');
-  const ctaHeadingEl = document.getElementById('portfolio-cta-heading');
-  const ctaDescriptionEl = document.getElementById('portfolio-cta-description');
-  const ctaButtonEl = document.getElementById('portfolio-cta-button');
 
   let projects = [];
   let activeFilter = 'all';
-  let featuredMaxProjects = 3;
+  // Featured Work shows at most this many featured projects.
+  const FEATURED_MAX_PROJECTS = 3;
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -142,6 +106,32 @@
   }
 
   /**
+   * Extracts a Google Drive file ID from a raw Drive share/view URL or
+   * returns the raw string if it's already a bare file ID. Returns '' for
+   * empty/null input. Used to detect when a Drive URL was accidentally
+   * saved into the `video` field (via "Paste URL" mode) instead of into
+   * `driveVideoId` — that URL would be blocked by the browser's CSP when
+   * used as a <video src>, so we normalise it here and treat it the same
+   * as driveVideoId.
+   */
+  function extractDriveFileId(raw) {
+    if (!raw) return '';
+    const match = raw.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
+    return match ? match[1] : '';
+  }
+
+  /**
+   * Resolves a stored media reference to a usable URL. Locally uploaded
+   * files are stored as "/uploads/..." paths and live on the backend
+   * origin (API_BASE); pasted hosted URLs (https://...) are already
+   * absolute and must NOT be prefixed with API_BASE.
+   */
+  function resolveMediaUrl(path) {
+    if (!path) return '';
+    return /^https?:\/\//i.test(path) ? path : API_BASE + path;
+  }
+
+  /**
    * Renders a project's primary media as image or video with a safe
    * fallback chain: video -> videoPoster -> image -> placeholder. Never
    * lets a missing/broken source collapse the card (spec: sections
@@ -152,23 +142,67 @@
    * project's `mediaType` — a project can carry both an image and a
    * video (image doubling as poster/fallback), so `project.video` alone
    * is the signal to show a video.
+   *
+   * Special case: if `project.video` is a Google Drive share URL (e.g.
+   * https://drive.google.com/file/d/.../view?usp=sharing), it cannot be
+   * used as a <video src> — the browser blocks it with a CSP/CORP error.
+   * We detect this and treat it as a driveVideoId instead, falling back
+   * to the poster/image with a play-button overlay (same as the
+   * explicit driveVideoId path). The admin should use the "Google Drive"
+   * tab in the Edit Project modal going forward so the ID is stored in
+   * the correct field.
    */
   function renderProjectMedia(project, eager) {
     const placeholder = 'assets/images/logo-mark-small.png';
     const alt = escapeHtml(project.title || '');
     const loadingAttr = eager ? '' : ' loading="lazy"';
 
-    if (project.video) {
-      const videoSrc = escapeHtml(API_BASE + project.video);
-      const posterFallback = project.image ? API_BASE + project.image : placeholder;
-      const posterSrc = project.videoPoster ? escapeHtml(API_BASE + project.videoPoster) : escapeHtml(posterFallback);
+    // Resolve effective Drive ID: prefer the dedicated driveVideoId field,
+    // but also handle the case where a Drive URL was accidentally pasted
+    // into the `video` URL field (the "Paste URL" tab in the admin modal).
+    const effectiveDriveId = project.driveVideoId
+      || (project.video ? extractDriveFileId(project.video) : '');
+
+    // Determine if the `video` field holds a real non-Drive hosted URL
+    // (mp4/webm CDN link, /uploads/ path, etc.) that is safe to use as
+    // a <video src>. A Drive URL in this field must be treated as a
+    // driveVideoId instead (see comment above).
+    const videoIsDriveUrl = project.video && extractDriveFileId(project.video) !== '';
+    const safeVideoSrc = project.video && !videoIsDriveUrl ? project.video : null;
+
+    // Google Drive video card: show poster/image with a play-button overlay.
+    // Can't embed a Drive iframe in a listing card (too heavy), so the image
+    // + play icon communicates "this is a video" and clicking opens the full
+    // case study page where the Drive player embeds without any YouTube logo.
+    if (effectiveDriveId && !safeVideoSrc) {
+      const thumbSrc = project.videoPoster
+        ? escapeHtml(resolveMediaUrl(project.videoPoster))
+        : project.image
+          ? escapeHtml(resolveMediaUrl(project.image))
+          : escapeHtml(placeholder);
+      return `<div class="project-media drive-video-card" style="position:relative;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;">
+        <img src="${thumbSrc}" alt="${alt}"${loadingAttr} style="width:100%;height:100%;object-fit:cover;opacity:0.85;" onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">
+        <div style="position:absolute;width:48px;height:48px;background:rgba(255,255,255,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#222" style="margin-left:2px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+      </div>`;
+    }
+
+    if (safeVideoSrc) {
+      // safeVideoSrc is guaranteed to NOT be a Google Drive URL (Drive URLs
+      // are handled above via the effectiveDriveId path). This prevents the
+      // ERR_BLOCKED_BY_RESPONSE / CSP error that occurs when a Drive share
+      // link is used directly as a <video src>.
+      const videoSrc = escapeHtml(resolveMediaUrl(safeVideoSrc));
+      const posterFallback = project.image ? resolveMediaUrl(project.image) : placeholder;
+      const posterSrc = project.videoPoster ? escapeHtml(resolveMediaUrl(project.videoPoster)) : escapeHtml(posterFallback);
       // onerror fallback: if the video itself fails to load, swap the
       // whole element for the poster/placeholder image so the card never
       // shows a broken player (spec: section 25).
       return `<video class="project-media" src="${videoSrc}" poster="${posterSrc}" muted loop playsinline preload="metadata" aria-label="${alt}" onerror="this.replaceWith(Object.assign(document.createElement('img'),{src:'${posterSrc}',alt:'${alt}',className:'project-media'}))"></video>`;
     }
 
-    const imgSrc = project.image ? escapeHtml(API_BASE + project.image) : escapeHtml(placeholder);
+    const imgSrc = project.image ? escapeHtml(resolveMediaUrl(project.image)) : escapeHtml(placeholder);
     return `<img class="project-media" src="${imgSrc}" alt="${alt}"${loadingAttr} onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">`;
   }
 
@@ -193,174 +227,15 @@
     });
   }
 
-  /**
-   * Renders the "All" button plus one button per enabled filter returned
-   * by the page-content API. Falls back to the current static markup
-   * (already in the DOM) if the content API is unavailable, so the page
-   * never ends up with a filter bar showing only "All".
-   */
-  function renderFilterBar(filters) {
-    if (!filterBar || !Array.isArray(filters) || filters.length === 0) return;
-
-    filterBar.innerHTML = filters
-      .map((f, idx) => `<button class="filter-btn${idx === 0 ? ' is-active' : ''}" data-filter="${escapeHtml(f.slug)}"${idx === 0 ? ' aria-current="true"' : ''}>${escapeHtml(f.label)}</button>`)
-      .join('');
-
-    activeFilter = filters[0] ? filters[0].slug : 'all';
+  // Premium video treatment: a "Video" badge (always visible) plus a glass
+  // play button (revealed on hover/focus) on any project that has a video.
+  function hasVideo(project) {
+    return Boolean(project.video || project.driveVideoId);
   }
-
-  // ---- Empty-optional-field helpers: hide instead of leaving an empty
-  // element or empty container taking up space (spec: section 21/22). ----
-  function setTextOrHide(el, text) {
-    if (!el) return;
-    if (text) {
-      el.textContent = text;
-      el.hidden = false;
-    } else {
-      el.hidden = true;
-      el.textContent = '';
-    }
-  }
-
-  function applyHero(hero) {
-    if (!hero || hero.enabled === false) {
-      if (heroSection) heroSection.hidden = true;
-      return;
-    }
-    if (heroSection) heroSection.hidden = false;
-
-    if (heroKickerEl && hero.kicker) heroKickerEl.textContent = hero.kicker;
-    if (heroHeadingEl && hero.heading) heroHeadingEl.textContent = hero.heading;
-    if (heroDescriptionEl && hero.description) heroDescriptionEl.textContent = hero.description;
-
-    setTextOrHide(heroSupportingEl, hero.supportingText);
-
-    if (heroCtaEl) {
-      if (hero.ctaText && hero.ctaLink) {
-        heroCtaEl.textContent = hero.ctaText;
-        heroCtaEl.setAttribute('href', hero.ctaLink);
-        heroCtaEl.hidden = false;
-      } else {
-        heroCtaEl.hidden = true;
-      }
-    }
-  }
-
-  function workStripItemHtml(item) {
-    return `
-      <div class="stat-item">
-        <div class="stat-num">${escapeHtml(item.value)}</div>
-        <div class="stat-label">${escapeHtml(item.label)}</div>
-      </div>
-    `;
-  }
-
-  function applyWorkStrip(workStrip) {
-    const items = (workStrip && Array.isArray(workStrip.items)) ? workStrip.items : [];
-    if (!workStrip || !workStrip.enabled || items.length === 0) {
-      if (workStripSection) workStripSection.hidden = true;
-      if (workStripGrid) workStripGrid.innerHTML = '';
-      return;
-    }
-    if (workStripGrid) workStripGrid.innerHTML = items.map(workStripItemHtml).join('');
-    if (workStripSection) workStripSection.hidden = false;
-  }
-
-  function applyFeaturedWorkContent(featuredWork) {
-    featuredMaxProjects = (featuredWork && Number.isFinite(Number(featuredWork.maxProjects)))
-      ? Number(featuredWork.maxProjects)
-      : 3;
-
-    if (!featuredWork || featuredWork.enabled === false) {
-      if (featuredSection) featuredSection.hidden = true;
-      return { enabled: false };
-    }
-
-    if (featuredKickerEl && featuredWork.kicker) featuredKickerEl.textContent = featuredWork.kicker;
-    if (featuredHeadingEl && featuredWork.heading) featuredHeadingEl.textContent = featuredWork.heading;
-    setTextOrHide(featuredDescriptionEl, featuredWork.description);
-
-    return { enabled: true };
-  }
-
-  function applyAllProjectsContent(allProjects) {
-    if (!allProjects || allProjects.enabled === false) {
-      if (allProjectsSection) allProjectsSection.hidden = true;
-      return;
-    }
-    if (allProjectsSection) allProjectsSection.hidden = false;
-
-    const hasHeading = Boolean(allProjects.kicker || allProjects.heading || allProjects.description);
-    if (allProjectsHeadingWrap) allProjectsHeadingWrap.hidden = !hasHeading;
-
-    if (allProjectsKickerEl && allProjects.kicker) allProjectsKickerEl.textContent = allProjects.kicker;
-    if (allProjectsHeadingEl && allProjects.heading) allProjectsHeadingEl.textContent = allProjects.heading;
-    setTextOrHide(allProjectsDescriptionEl, allProjects.description);
-  }
-
-  function applyTestimonialSection(testimonialSectionData) {
-    const t = testimonialSectionData && testimonialSectionData.testimonial;
-    if (!testimonialSectionData || !testimonialSectionData.enabled || !t) {
-      if (testimonialSection) testimonialSection.hidden = true;
-      return;
-    }
-
-    if (testimonialKickerEl && testimonialSectionData.kicker) testimonialKickerEl.textContent = testimonialSectionData.kicker;
-    if (testimonialHeadingEl && testimonialSectionData.heading) testimonialHeadingEl.textContent = testimonialSectionData.heading;
-
-    if (testimonialQuoteEl) testimonialQuoteEl.textContent = `"${t.quote || ''}"`;
-    if (testimonialNameEl) testimonialNameEl.textContent = t.name || '';
-    if (testimonialRoleEl) testimonialRoleEl.textContent = [t.role, t.company].filter(Boolean).join(', ');
-    if (testimonialAvatarEl) testimonialAvatarEl.textContent = t.initials || '';
-
-    if (testimonialSection) testimonialSection.hidden = false;
-  }
-
-  function applyCta(cta) {
-    if (!cta || cta.enabled === false) {
-      if (ctaSection) ctaSection.hidden = true;
-      return;
-    }
-    if (ctaSection) ctaSection.hidden = false;
-
-    if (ctaHeadingEl && cta.heading) ctaHeadingEl.textContent = cta.heading;
-    if (ctaDescriptionEl && cta.description) ctaDescriptionEl.textContent = cta.description;
-    if (ctaButtonEl) {
-      if (cta.buttonText) {
-        // Preserve the arrow icon markup — only replace the leading text node.
-        const icon = ctaButtonEl.querySelector('svg');
-        ctaButtonEl.textContent = cta.buttonText + ' ';
-        if (icon) ctaButtonEl.appendChild(icon);
-      }
-      if (cta.buttonLink) ctaButtonEl.setAttribute('href', cta.buttonLink);
-    }
-  }
-
-  let featuredContentState = { enabled: true };
-
-  function applyPageContent(content) {
-    if (!content) return;
-
-    applyHero(content.hero);
-    applyWorkStrip(content.workStrip);
-    featuredContentState = applyFeaturedWorkContent(content.featuredWork);
-    applyAllProjectsContent(content.allProjects);
-    applyTestimonialSection(content.testimonialSection);
-    applyCta(content.cta);
-
-    renderFilterBar(content.filters);
-  }
-
-  async function loadPageContent() {
-    try {
-      const response = await fetch(`${API_BASE}/api/portfolio/page-content`, { credentials: 'omit' });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (data && data.success) applyPageContent(data.data);
-    } catch {
-      // Non-critical: the page already has sensible static fallback
-      // content/markup for hero, CTA, and filters if this request fails.
-    }
+  function videoOverlayHtml(project) {
+    if (!hasVideo(project)) return '';
+    return '<span class="pf-vbadge"><i></i>Video</span>' +
+      '<span class="pf-play" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>';
   }
 
   function cardHtml(project) {
@@ -381,8 +256,8 @@
 
     const media = renderProjectMedia(project, false);
     const thumb = detailsHref
-      ? `<a href="${escapeHtml(detailsHref)}" class="portfolio-thumb-link" ${trackAttr}><div class="portfolio-thumb">${media}</div></a>`
-      : `<div class="portfolio-thumb">${media}</div>`;
+      ? `<a href="${escapeHtml(detailsHref)}" class="portfolio-thumb-link" ${trackAttr}><div class="portfolio-thumb">${media}${videoOverlayHtml(project)}</div></a>`
+      : `<div class="portfolio-thumb">${media}${videoOverlayHtml(project)}</div>`;
 
     const titleInner = `${escapeHtml(project.title)} ${arrowIconSvg()}`;
     const titleMarkup = detailsHref
@@ -394,7 +269,7 @@
       : '';
 
     return `
-      <div class="portfolio-item" data-category="${filterSlug}" data-id="${escapeHtml(project._id || project.slug)}">
+      <div class="portfolio-item${hasVideo(project) ? ' is-video' : ''}" data-category="${filterSlug}" data-id="${escapeHtml(project._id || project.slug)}">
         ${thumb}
         <div class="portfolio-info">
           <div class="portfolio-cat">${escapeHtml(project.category)}</div>
@@ -423,11 +298,11 @@
     const href = caseStudyUrl(project) || '#portfolio-work';
     const trackAttr = `data-portfolio-track="${escapeHtml(project.slug || project._id || '')}"`;
     const media = renderProjectMedia(project, eagerMedia);
-    const cardClass = variant === 'primary' ? 'work-card work-card-primary' : 'work-card work-card-secondary';
+    const cardClass = (variant === 'primary' ? 'work-card work-card-primary' : 'work-card work-card-secondary') + (hasVideo(project) ? ' is-video' : '');
 
     return `
       <a href="${escapeHtml(href)}" class="${cardClass} reveal reveal-stagger" ${trackAttr} data-category="${filterSlug}" style="--stagger-delay:${index * 90}ms">
-        <div class="work-thumb">${media}</div>
+        <div class="work-thumb">${media}${videoOverlayHtml(project)}</div>
         <div class="work-meta">
           <div>
             <div class="work-category">${escapeHtml(project.category)}</div>
@@ -486,14 +361,9 @@
   function renderFeaturedWork() {
     if (!featuredSection) return;
 
-    if (!featuredContentState.enabled) {
-      featuredSection.hidden = true;
-      return;
-    }
-
     const featuredProjects = projects
       .filter((p) => p.featured === true)
-      .slice(0, featuredMaxProjects);
+      .slice(0, FEATURED_MAX_PROJECTS);
 
     if (featuredProjects.length === 0) {
       featuredSection.hidden = true;
@@ -619,15 +489,5 @@
     render();
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    // Page content (filters, section visibility, featured maxProjects in
-    // particular) should be in place before the grids render, so cards
-    // aren't mis-filtered against stale/default filter buttons for a
-    // frame and Featured Work knows its cap before rendering. If the
-    // page-content request fails, loadPortfolio() still runs against the
-    // static fallback markup already in the DOM — a page-content error
-    // never blocks the project grid from loading (spec: section 32).
-    await loadPageContent();
-    loadPortfolio();
-  });
+  document.addEventListener('DOMContentLoaded', loadPortfolio);
 })();

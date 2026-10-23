@@ -1111,7 +1111,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
-<script>window.STSK_API_BASE = "https://scale-to-sky-real-backend.onrender.com";</script>
+<script>window.STSK_API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? (window.location.protocol + "//" + window.location.hostname + ":5000") : "https://scale-to-sky-real-backend.onrender.com";</script>
 <script src="js/analytics.js"></script>
 <script src="js/main.js"></script>
 <script src="js/homepage-portfolio.js"></script>

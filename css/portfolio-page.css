@@ -1,0 +1,106 @@
+/* Portfolio page redesign. Scoped to <main class="pf"> and pf-* classes so
+   no other page is affected. Uses the site tokens from style.css. */
+.pf { --ink:#120C26; --ink-2:#1d1440; --glow:rgba(109,61,245,.55); }
+
+/* ---------- Hero ---------- */
+.pf-hero { padding: calc(var(--header-h) + 72px) 0 88px;
+  background: radial-gradient(55% 70% at 88% 0%, rgba(109,61,245,.13), transparent 62%),
+              radial-gradient(40% 60% at 0% 100%, rgba(232,57,155,.09), transparent 60%), var(--white); }
+.pf-hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 64px; align-items: center; }
+.pf-pill { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 99px;
+  background: var(--primary-light); color: var(--primary-dark); font: 600 .875rem var(--font-display); margin: 0 0 24px; }
+.pf-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+.pf-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.7rem, 6.2vw, 4.9rem);
+  line-height: 1.02; letter-spacing: -.035em; color: var(--text); margin: 0 0 24px; max-width: 12ch; }
+.pf-lead { font-size: 1.125rem; line-height: 1.7; color: var(--muted); max-width: 52ch; margin: 0 0 36px; }
+.pf-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+.pf-caps { list-style: none; margin: 0; padding: 8px 28px; border-radius: var(--radius-lg);
+  background: var(--white); border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
+.pf-caps li + li { border-top: 1px solid var(--border); }
+.pf-caps a { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 0; color: var(--text); transition: color var(--transition); }
+.pf-caps strong { display: block; font: 700 1.05rem var(--font-display); }
+.pf-caps em { display: block; font-style: normal; font-size: .875rem; color: var(--muted); margin-top: 2px; }
+.pf-caps svg { flex-shrink: 0; color: var(--primary); transition: transform var(--transition); }
+.pf-caps a:hover { color: var(--primary-dark); }
+.pf-caps a:hover svg { transform: translate(3px,-3px); }
+.pf-caps a:focus-visible, .pf .filter-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 8px; }
+
+/* ---------- Section heads ---------- */
+.pf-sec-head { max-width: 720px; margin-bottom: 8px; }
+.pf-h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  line-height: 1.1; letter-spacing: -.025em; margin: 0 0 16px; }
+.pf-sec-head p { font-size: 1.0625rem; line-height: 1.7; color: var(--muted); margin: 0; }
+
+/* ---------- Showreel (featured) ---------- */
+.pf-reel { padding: 104px 0; color: #fff; background:
+  radial-gradient(50% 60% at 15% 0%, rgba(109,61,245,.38), transparent 65%),
+  radial-gradient(40% 50% at 100% 100%, rgba(232,57,155,.2), transparent 60%), var(--ink); }
+.pf-reel .pf-h2 { color: #fff; }
+.pf-reel .pf-sec-head p { color: rgba(255,255,255,.7); }
+.pf-reel .work-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; margin-top: 52px; align-items: stretch; }
+.pf-reel .work-grid:not(.work-grid-editorial) { grid-template-columns: 1fr; }
+.pf-reel .work-secondary-row { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.pf-reel .work-card { position: relative; display: block; margin: 0; border-radius: 26px; overflow: hidden; background: #000; isolation: isolate; }
+.pf-reel .work-thumb { border: 0; border-radius: 0; height: 100%; aspect-ratio: 16/10; background: #000; }
+.pf-reel .work-card-primary .work-thumb { aspect-ratio: auto; min-height: 100%; }
+.pf-reel .work-grid:not(.work-grid-editorial) .work-card-primary .work-thumb { aspect-ratio: 16/8; }
+.pf-reel .work-thumb::after { opacity: 1; background: linear-gradient(to top, rgba(10,6,24,.92) 0%, rgba(10,6,24,.35) 38%, transparent 62%); }
+.pf-reel .work-meta { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 28px 28px 26px; z-index: 2; align-items: flex-end; }
+.pf-reel .work-category { color: #CDB8FF; }
+.pf-reel .work-name { color: #fff; font-size: 1.3rem; }
+.pf-reel .work-card-primary .work-name { font-size: clamp(1.5rem, 2.6vw, 2.1rem); letter-spacing: -.02em; }
+.pf-reel .work-desc { color: rgba(255,255,255,.78); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 56ch; }
+.pf-reel .work-client { color: rgba(255,255,255,.6); }
+.pf-reel .work-view-details, .pf-reel .work-arrow { color: #fff; }
+.pf-reel .work-card-secondary .work-desc { display: none; }
+
+/* ---------- All projects ---------- */
+.pf-all { padding: 104px 0 88px; }
+.pf-all .filter-bar { justify-content: flex-start; margin: 36px 0 44px; }
+.pf .portfolio-grid { grid-template-columns: repeat(3, 1fr); gap: 48px 28px; margin-top: 0; }
+.pf .portfolio-thumb { border-radius: 22px; aspect-ratio: 16/11; }
+.pf .portfolio-title { font-size: 1.2rem; }
+.pf .portfolio-item:hover .portfolio-thumb { box-shadow: 0 22px 50px -22px rgba(70,45,120,.45); }
+
+/* ---------- Premium video cards ---------- */
+.pf .is-video .work-thumb, .pf .is-video .portfolio-thumb { box-shadow: 0 0 0 1px rgba(162,61,224,.35), 0 20px 50px -22px var(--glow); }
+.pf .drive-video-card > div { display: none !important; }
+.pf-vbadge { position: absolute; top: 16px; left: 16px; z-index: 3; display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 13px 7px 11px; border-radius: 99px; color: #fff; font: 600 .75rem var(--font-display);
+  background: rgba(18,12,38,.55); border: 1px solid rgba(255,255,255,.2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.pf-vbadge i { width: 7px; height: 7px; border-radius: 50%; background: #FF5CAE; animation: pf-pulse 1.8s ease-out infinite; }
+.pf-play { position: absolute; top: 50%; left: 50%; z-index: 3; width: 72px; height: 72px; margin: -36px 0 0 -36px; border-radius: 50%;
+  display: grid; place-items: center; color: #fff; pointer-events: none; opacity: 0; transform: scale(.82);
+  background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.4); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  transition: opacity var(--transition), transform var(--transition); }
+.pf-play svg { margin-left: 3px; }
+.pf-reel .pf-play { top: 42%; }
+a:hover > .work-thumb .pf-play, .portfolio-item:hover .pf-play, a:focus-visible > .work-thumb .pf-play { opacity: 1; transform: scale(1); }
+@keyframes pf-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,92,174,.7); } 70%,100% { box-shadow: 0 0 0 9px rgba(255,92,174,0); } }
+
+/* ---------- How we approach ---------- */
+.pf-how { background: var(--surface); padding: 96px 0; border-top: 1px solid var(--border); }
+.pf-how-list { list-style: none; margin: 48px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; }
+.pf-how-list li { position: relative; padding-top: 24px; border-top: 1px solid var(--border); }
+.pf-how-list li::before { content: ''; position: absolute; top: -2px; left: 0; width: 44px; height: 3px; border-radius: 3px; background: var(--gradient-premium); }
+.pf-how-list h3 { font: 700 1.1rem var(--font-display); margin: 0 0 10px; }
+.pf-how-list p { color: var(--muted); font-size: .95rem; line-height: 1.7; margin: 0; }
+
+@media (max-width: 980px) {
+  .pf-hero-grid { grid-template-columns: 1fr; gap: 44px; }
+  .pf-reel .work-grid { grid-template-columns: 1fr; }
+  .pf-reel .work-card-primary .work-thumb { aspect-ratio: 16/11; }
+  .pf .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+  .pf-how-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .pf-hero { padding-bottom: 64px; }
+  .pf-reel, .pf-all, .pf-how { padding: 72px 0; }
+  .pf .portfolio-grid, .pf-how-list { grid-template-columns: 1fr; }
+  .pf-reel .work-meta { padding: 20px; }
+  .pf-reel .work-card .work-thumb { aspect-ratio: 4/5; }
+  .pf-reel .work-card-secondary .work-thumb { aspect-ratio: 4/3; }
+  .pf-reel .work-desc, .pf-reel .work-client { display: none; }
+  .pf-play { opacity: .95; transform: none; width: 58px; height: 58px; margin: -29px 0 0 -29px; }
+}
+@media (prefers-reduced-motion: reduce) { .pf-vbadge i { animation: none; } .pf-play { transition: none; } }

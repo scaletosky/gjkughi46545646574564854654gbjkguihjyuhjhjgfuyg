@@ -4507,22 +4507,39 @@ body.modal-open {
   width: 100%;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: var(--surface);
+  background: #000;
   border: 1px solid var(--border);
+  /* Default 16/9 — JS overrides inline with the video's real ratio
+     (e.g. 9/16 for portrait reels) once metadata loads, so black bars
+     never appear regardless of the video's orientation. */
   aspect-ratio: 16/9;
-  max-height: 680px;
+  position: relative;
 }
 .case-study-page .cs-hero-media {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   display: block;
+  border: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* iframes (YouTube, Drive fallback) keep contain — they manage their
+     own player chrome and must not be clipped by the host page. */
+  object-fit: contain;
+}
+/* Native <video> elements fill the container edge-to-edge once the
+   container's aspect-ratio matches the video's real dimensions (set by
+   JS on loadedmetadata). object-fit: cover handles any sub-pixel
+   rounding without leaving black slivers. */
+.case-study-page .cs-hero-media-wrap video.cs-hero-media {
+  object-fit: cover;
 }
 
 @media (max-width: 768px) {
   .case-study-page .cs-hero { padding: calc(var(--header-h) + 48px) 0 0; }
   .case-study-page .cs-back-link { margin-bottom: 24px; }
-  .case-study-page .cs-hero-media-wrap { aspect-ratio: 4/3; max-height: none; border-radius: var(--radius-sm); }
+  /* Mobile default also 16/9; JS still overrides for portrait videos. */
+  .case-study-page .cs-hero-media-wrap { aspect-ratio: 16/9; max-height: none; border-radius: var(--radius-sm); }
 }
 
 /* ---- 02. Project information: title, short description, editorial
@@ -4676,6 +4693,7 @@ body.modal-open {
   height: 100%;
   object-fit: cover;
   display: block;
+  border: none; /* neutralizes default iframe border for YouTube embeds */
 }
 .case-study-page .cs-gallery-caption {
   margin-top: 12px;

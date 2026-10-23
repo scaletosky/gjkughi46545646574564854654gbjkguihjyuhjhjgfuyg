@@ -3,7 +3,7 @@
  * Loads the actual homepage markup fragment + the actual script file
  * into a jsdom document, mocks fetch with realistic API payloads, and
  * asserts on the real rendered DOM (card hrefs, media fallback chain,
- * empty/loading states, CMS content application).
+ * empty/loading states, static copy kept, media URL handling).
  */
 const fs = require('fs');
 const path = require('path');
@@ -62,23 +62,15 @@ async function runScenario(name, { fetchImpl, assertions }) {
   dom.window.close();
 }
 
+const unexpected = [];
+
 async function main() {
   const featuredPayload = (projects) => ({
     ok: true,
     json: async () => ({ success: true, data: { projects } }),
   });
-  const pageContentPayload = () => ({
-    ok: true,
-    json: async () => ({
-      success: true,
-      data: {
-        homepageKicker: 'SELECTED WORK',
-        homepageHeading: "Recent projects we're proud of.",
-        homepageButtonText: 'View All Work',
-        homepageButtonLink: 'portfolio.html',
-      },
-    }),
-  });
+  // Page copy is static HTML now — any non-/featured request is unexpected.
+  const unexpectedRequest = (url) => { unexpected.push(url); return { ok: false, json: async () => ({}) }; };
 
   await runScenario('Image project card: correct Case Study URL, not projectUrl', {
     fetchImpl: async (url) => {
@@ -92,7 +84,7 @@ async function main() {
           },
         ]);
       }
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const grid = doc.getElementById('home-portfolio-grid');
@@ -119,7 +111,7 @@ async function main() {
           },
         ]);
       }
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const video = doc.querySelector('video.project-media');
@@ -139,7 +131,7 @@ async function main() {
           { _id: '3', title: 'No Poster Vid', slug: 'no-poster-vid', category: 'Other', mediaType: 'video', video: '/uploads/x.mp4' },
         ]);
       }
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const video = doc.querySelector('video.project-media');
@@ -154,7 +146,7 @@ async function main() {
           { _id: '4', title: 'Bare Project', slug: 'bare-project', category: 'Other' },
         ]);
       }
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const img = doc.querySelector('img.project-media');
@@ -178,7 +170,7 @@ async function main() {
           { _id: '5', title: 'No Slug Project', category: 'Other', image: '/uploads/x.jpg' },
         ]);
       }
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const card = doc.querySelector('.work-card');
@@ -190,7 +182,7 @@ async function main() {
   await runScenario('Zero projects -> empty state shown, no fake cards', {
     fetchImpl: async (url) => {
       if (url.includes('/featured')) return featuredPayload([]);
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const empty = doc.getElementById('home-portfolio-empty');
@@ -204,7 +196,7 @@ async function main() {
   await runScenario('API failure -> graceful empty state, no crash', {
     fetchImpl: async (url) => {
       if (url.includes('/featured')) throw new Error('network down');
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const empty = doc.getElementById('home-portfolio-empty');
@@ -212,28 +204,51 @@ async function main() {
     },
   });
 
-  await runScenario('CMS content (kicker/heading/button) applied from Admin API', {
+  await runScenario('Static heading/button untouched; no page-content request is made', {
     fetchImpl: async (url) => {
       if (url.includes('/featured')) return featuredPayload([{ _id: '6', title: 'X', slug: 'x', category: 'Other', image: '/i.jpg' }]);
-      return {
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: {
-            homepageKicker: 'CUSTOM KICKER',
-            homepageHeading: 'Custom heading text',
-            homepageButtonText: 'See Everything',
-            homepageButtonLink: '/portfolio.html',
-          },
-        }),
-      };
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
-      assert(doc.getElementById('home-portfolio-kicker').textContent === 'CUSTOM KICKER', 'admin kicker applied');
-      assert(doc.getElementById('home-portfolio-heading').textContent === 'Custom heading text', 'admin heading applied');
+      assert(doc.getElementById('home-portfolio-kicker').textContent === 'Selected work', 'static kicker kept');
+      assert(doc.getElementById('home-portfolio-heading').textContent === "Recent projects we're proud of.", 'static heading kept');
       const btn = doc.getElementById('home-portfolio-button');
-      assert(btn.textContent === 'See Everything', 'admin button text applied');
-      assert(btn.getAttribute('href') === '/portfolio.html', 'admin button link applied');
+      assert(btn.textContent === 'View full portfolio' && btn.getAttribute('href') === 'portfolio.html', 'static button kept');
+      assert(unexpected.length === 0, `no requests other than /featured -> ${JSON.stringify(unexpected)}`);
+    },
+  });
+
+  await runScenario('Hosted (absolute) video/poster URLs are NOT prefixed with the API base', {
+    fetchImpl: async (url) => {
+      if (url.includes('/featured')) {
+        return featuredPayload([{
+          _id: '7', title: 'Hosted', slug: 'hosted', category: 'Other',
+          video: 'https://cdn.example.com/reel.mp4', videoPoster: 'https://cdn.example.com/poster.jpg',
+        }]);
+      }
+      return unexpectedRequest(url);
+    },
+    assertions: (doc) => {
+      const video = doc.querySelector('video.project-media');
+      assert(Boolean(video), 'video element rendered');
+      assert(video.getAttribute('src') === 'https://cdn.example.com/reel.mp4', `video src untouched -> ${video.getAttribute('src')}`);
+      assert(video.getAttribute('poster') === 'https://cdn.example.com/poster.jpg', `poster untouched -> ${video.getAttribute('poster')}`);
+    },
+  });
+
+  await runScenario('Drive share link pasted into video field renders play-card, not a broken <video>', {
+    fetchImpl: async (url) => {
+      if (url.includes('/featured')) {
+        return featuredPayload([{
+          _id: '8', title: 'Drive', slug: 'drive', category: 'Other', image: '/d.jpg',
+          video: 'https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp/view?usp=sharing',
+        }]);
+      }
+      return unexpectedRequest(url);
+    },
+    assertions: (doc) => {
+      assert(!doc.querySelector('video.project-media'), 'no <video> element for a Drive URL');
+      assert(Boolean(doc.querySelector('.drive-video-card')), 'drive play-card rendered');
     },
   });
 
@@ -247,7 +262,7 @@ async function main() {
           { _id: '4', title: 'Four (should never appear)', slug: 'four', category: 'Other', image: '/4.jpg' },
         ]);
       }
-      return pageContentPayload();
+      return unexpectedRequest(url);
     },
     assertions: (doc) => {
       const cards = doc.querySelectorAll('.work-card');

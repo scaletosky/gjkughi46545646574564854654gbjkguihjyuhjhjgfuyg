@@ -1,32 +1,10 @@
 /* ============================================================
-   PHASE 10 — Homepage Portfolio Integration & Final Sync
-   Homepage "Selected work" preview backed entirely by the real
-   Portfolio collection (Phase 6) via the existing
-   /api/portfolio/featured endpoint (featured+published priority,
-   deterministic displayOrder-based fallback fill, capped at 3,
-   server-side — same algorithm and endpoint used since Phase 3;
-   no new backend work was needed for Phase 10).
-
-   Brought in line with js/portfolio-public.js (Phase 8/9) so
-   Homepage and the Portfolio page render/behave identically for
-   the same project:
-     - View Details now always routes to the internal Case Study
-       page (portfolio-project.html?slug=...) via caseStudyUrl(),
-       never to the external project.projectUrl and never to a
-       plain portfolio.html link (previously incorrect).
-     - Media rendering now uses the same image/video fallback
-       chain (video -> videoPoster -> image -> placeholder) with
-       IntersectionObserver-gated playback, instead of images only.
-
-   Renders .work-card markup (shared CSS with the Portfolio page's
-   editorial cards) rather than .portfolio-item markup.
-
-   Phase 9: when 3 projects are returned, renders the same
-   featured + 2-up editorial layout used on the Portfolio page
-   (.work-grid-editorial / .work-card-primary) instead of a flat
-   3-up grid, for a stronger "selected work" showcase. No change to
-   the data source, endpoint, or fallback behaviour — purely a
-   rendering/markup change layered on top of the existing fetch.
+   Homepage "Selected work" preview.
+   Only the projects come from the Super Admin backend
+   (GET /api/portfolio/featured — featured + published first,
+   filled with other published projects, capped at 3 server-side).
+   Heading and button are static HTML in index.html.
+   Renders .work-card markup (shared CSS with the Portfolio page).
    ============================================================ */
 
 (function () {
@@ -44,9 +22,6 @@
   const grid = document.getElementById('home-portfolio-grid');
   const loadingEl = document.getElementById('home-portfolio-loading');
   const emptyEl = document.getElementById('home-portfolio-empty');
-  const kickerEl = document.getElementById('home-portfolio-kicker');
-  const headingEl = document.getElementById('home-portfolio-heading');
-  const buttonEl = document.getElementById('home-portfolio-button');
 
   if (!grid) return; // not on the homepage
 
@@ -71,33 +46,104 @@
   }
 
   /**
+   * Extracts a Google Drive file ID from a raw Drive share/view URL or
+   * returns the raw string if it's already a bare file ID. Returns '' for
+   * empty/null input. Used to detect when a Drive URL was accidentally
+   * saved into the `video` field (via "Paste URL" mode) instead of into
+   * `driveVideoId` — that URL would be blocked by the browser's CSP when
+   * used as a <video src>, so we normalise it here and treat it the same
+   * as driveVideoId.
+   */
+  function extractDriveFileId(raw) {
+    if (!raw) return '';
+    const match = raw.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
+    return match ? match[1] : '';
+  }
+
+  /**
+   * Resolves a stored media reference to a usable URL. Locally uploaded
+   * files are stored as "/uploads/..." paths and live on the backend
+   * origin (API_BASE); pasted hosted URLs (https://...) are already
+   * absolute and must NOT be prefixed with API_BASE.
+   */
+  function resolveMediaUrl(path) {
+    if (!path) return '';
+    return /^https?:\/\//i.test(path) ? path : API_BASE + path;
+  }
+
+  /**
    * Renders a project's primary media as image or video with a safe
    * fallback chain: video -> videoPoster -> image -> placeholder. Never
-   * lets a missing/broken source collapse the card. Mirrors
-   * js/portfolio-public.js's renderProjectMedia (spec: sections 14/15/25).
+   * lets a missing/broken source collapse the card (spec: sections
+   * 10/25/58/65). Mirrors js/portfolio-public.js so Homepage and the
+   * Portfolio page render every project identically.
    *
    * Video takes priority whenever it's present, regardless of the
-   * project's `mediaType` — mediaType only used to pick which upload
-   * panel the admin sees by default, not to gate rendering. A project
-   * can carry both an image and a video (image doubling as poster/
-   * fallback), so `project.video` alone is the signal to show a video.
+   * project's `mediaType` — a project can carry both an image and a
+   * video (image doubling as poster/fallback), so `project.video` alone
+   * is the signal to show a video.
+   *
+   * Special case: if `project.video` is a Google Drive share URL (e.g.
+   * https://drive.google.com/file/d/.../view?usp=sharing), it cannot be
+   * used as a <video src> — the browser blocks it with a CSP/CORP error.
+   * We detect this and treat it as a driveVideoId instead, falling back
+   * to the poster/image with a play-button overlay (same as the
+   * explicit driveVideoId path). The admin should use the "Google Drive"
+   * tab in the Edit Project modal going forward so the ID is stored in
+   * the correct field.
    */
   function renderProjectMedia(project) {
     const placeholder = 'assets/images/logo-mark-small.png';
     const alt = escapeHtml(project.title || '');
+    const loadingAttr = ' loading="lazy"';
 
-    if (project.video) {
-      const videoSrc = escapeHtml(API_BASE + project.video);
-      const posterFallback = project.image ? API_BASE + project.image : placeholder;
-      const posterSrc = project.videoPoster ? escapeHtml(API_BASE + project.videoPoster) : escapeHtml(posterFallback);
+    // Resolve effective Drive ID: prefer the dedicated driveVideoId field,
+    // but also handle the case where a Drive URL was accidentally pasted
+    // into the `video` URL field (the "Paste URL" tab in the admin modal).
+    const effectiveDriveId = project.driveVideoId
+      || (project.video ? extractDriveFileId(project.video) : '');
+
+    // Determine if the `video` field holds a real non-Drive hosted URL
+    // (mp4/webm CDN link, /uploads/ path, etc.) that is safe to use as
+    // a <video src>. A Drive URL in this field must be treated as a
+    // driveVideoId instead (see comment above).
+    const videoIsDriveUrl = project.video && extractDriveFileId(project.video) !== '';
+    const safeVideoSrc = project.video && !videoIsDriveUrl ? project.video : null;
+
+    // Google Drive video card: show poster/image with a play-button overlay.
+    // Can't embed a Drive iframe in a listing card (too heavy), so the image
+    // + play icon communicates "this is a video" and clicking opens the full
+    // case study page where the Drive player embeds without any YouTube logo.
+    if (effectiveDriveId && !safeVideoSrc) {
+      const thumbSrc = project.videoPoster
+        ? escapeHtml(resolveMediaUrl(project.videoPoster))
+        : project.image
+          ? escapeHtml(resolveMediaUrl(project.image))
+          : escapeHtml(placeholder);
+      return `<div class="project-media drive-video-card" style="position:relative;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;">
+        <img src="${thumbSrc}" alt="${alt}"${loadingAttr} style="width:100%;height:100%;object-fit:cover;opacity:0.85;" onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">
+        <div style="position:absolute;width:48px;height:48px;background:rgba(255,255,255,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#222" style="margin-left:2px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+      </div>`;
+    }
+
+    if (safeVideoSrc) {
+      // safeVideoSrc is guaranteed to NOT be a Google Drive URL (Drive URLs
+      // are handled above via the effectiveDriveId path). This prevents the
+      // ERR_BLOCKED_BY_RESPONSE / CSP error that occurs when a Drive share
+      // link is used directly as a <video src>.
+      const videoSrc = escapeHtml(resolveMediaUrl(safeVideoSrc));
+      const posterFallback = project.image ? resolveMediaUrl(project.image) : placeholder;
+      const posterSrc = project.videoPoster ? escapeHtml(resolveMediaUrl(project.videoPoster)) : escapeHtml(posterFallback);
       // onerror fallback: if the video itself fails to load, swap the
-      // whole element for the poster/placeholder image so the card
-      // never shows a broken player.
+      // whole element for the poster/placeholder image so the card never
+      // shows a broken player (spec: section 25).
       return `<video class="project-media" src="${videoSrc}" poster="${posterSrc}" muted loop playsinline preload="metadata" aria-label="${alt}" onerror="this.replaceWith(Object.assign(document.createElement('img'),{src:'${posterSrc}',alt:'${alt}',className:'project-media'}))"></video>`;
     }
 
-    const imgSrc = project.image ? escapeHtml(API_BASE + project.image) : escapeHtml(placeholder);
-    return `<img class="project-media" src="${imgSrc}" alt="${alt}" loading="lazy" onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">`;
+    const imgSrc = project.image ? escapeHtml(resolveMediaUrl(project.image)) : escapeHtml(placeholder);
+    return `<img class="project-media" src="${imgSrc}" alt="${alt}"${loadingAttr} onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">`;
   }
 
   // Homepage videos are more performance-sensitive than the Portfolio
@@ -147,27 +193,6 @@
       if (observer) observer.observe(v);
       else v.play().catch(() => {});
     });
-  }
-
-  function applyPageContent(content) {
-    if (!content) return;
-    if (kickerEl && content.homepageKicker) kickerEl.textContent = content.homepageKicker;
-    if (headingEl && content.homepageHeading) headingEl.textContent = content.homepageHeading;
-    if (buttonEl) {
-      if (content.homepageButtonText) buttonEl.textContent = content.homepageButtonText;
-      if (content.homepageButtonLink) buttonEl.setAttribute('href', content.homepageButtonLink);
-    }
-  }
-
-  async function loadPageContent() {
-    try {
-      const response = await fetch(`${API_BASE}/api/portfolio/page-content`, { credentials: 'omit' });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (data && data.success) applyPageContent(data.data);
-    } catch {
-      // Non-critical — static fallback copy already sits in the markup.
-    }
   }
 
   function cardHtml(project, isPrimary) {
@@ -313,8 +338,5 @@
     wireCardMedia(grid);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    loadPageContent();
-    loadFeaturedProjects();
-  });
+  document.addEventListener('DOMContentLoaded', loadFeaturedProjects);
 })();

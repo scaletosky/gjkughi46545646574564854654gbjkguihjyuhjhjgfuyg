@@ -266,17 +266,92 @@
     return /^https?:\/\//i.test(path) || path.startsWith('/uploads/') ? `${API_BASE}${path}` : path;
   }
 
+  // Recognizes YouTube URLs in any common form (watch?v=, youtu.be/,
+  // shorts/, embed/) and pulls out the 11-character video ID. Returns
+  // null for anything else, including plain uploaded video paths, so
+  // those keep using the native <video> element untouched.
+  function getYouTubeId(url) {
+    if (!url || typeof url !== 'string') return null;
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    ];
+    for (const re of patterns) {
+      const match = url.match(re);
+      if (match) return match[1];
+    }
+    return null;
+  }
+
   function renderMainMedia(project) {
     const wrap = document.getElementById('cs-main-media');
     if (!wrap) return;
 
     const alt = escapeHtml(project.title || '');
 
-    // Video takes priority whenever it's present, regardless of
-    // `mediaType` — a project can carry both an image and a video
-    // (image doubling as poster/fallback), so `project.video` alone is
-    // the signal to show a video.
+    // ---- Google Drive video — highest priority when driveVideoId is set,
+    // OR when project.video contains a Drive share URL (i.e. the admin used
+    // the "Paste URL" tab in the Edit Project modal instead of the "Google
+    // Drive" tab — both result in the same Drive file needing an iframe embed).
+    // Embeds cleanly via Drive's /file/d/<ID>/preview URL.
+    // No YouTube logo, no YouTube branding, no third-party player chrome.
+    // Drive handles adaptive streaming; viewer must have access (shared link).
+    function extractDriveFileId(raw) {
+      if (!raw) return '';
+      const match = raw.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
+      return match ? match[1] : '';
+    }
+    const effectiveDriveId = project.driveVideoId
+      || (project.video ? extractDriveFileId(project.video) : '');
+    if (effectiveDriveId) {
+      const driveId = encodeURIComponent(effectiveDriveId);
+      // Use Google Drive's direct streaming URL instead of /preview iframe.
+      // /preview triggers Drive's own sub-frame loads (accounts.google.com)
+      // which get blocked by CSP frame-ancestors on many hosting setups.
+      // uc?export=download&id=<ID> gives a direct streamable MP4 URL that
+      // works inside a native <video> tag — no iframe, no CSP issues, and
+      // the browser's own fullscreen button works natively.
+      const directSrc = `https://drive.google.com/uc?export=download&id=${driveId}`;
+      const posterFallback = project.videoPoster || project.image || '';
+      const posterSrc = posterFallback ? escapeHtml(mediaUrl(posterFallback)) : '';
+      wrap.innerHTML = `<video class="cs-hero-media" src="${directSrc}"${posterSrc ? ` poster="${posterSrc}"` : ''} controls playsinline preload="metadata" aria-label="${alt}" controlsList="nodownload"></video>`;
+
+      const videoEl = wrap.querySelector('video');
+      if (videoEl) {
+        // Once metadata loads we know the real video dimensions.
+        // Set the container's aspect-ratio to match exactly so there
+        // are zero black bars — works for portrait (9:16), landscape
+        // (16:9), square, or any other ratio stored in Drive.
+        videoEl.addEventListener('loadedmetadata', () => {
+          const vw = videoEl.videoWidth;
+          const vh = videoEl.videoHeight;
+          if (vw && vh) {
+            wrap.style.aspectRatio = `${vw} / ${vh}`;
+          }
+        }, { once: true });
+
+        videoEl.addEventListener('error', () => {
+          // Fallback: if direct stream fails (e.g. file not publicly shared),
+          // fall back to the /preview iframe as a last resort.
+          const fallbackSrc = `https://drive.google.com/file/d/${driveId}/preview`;
+          wrap.innerHTML = `<iframe class="cs-hero-media" src="${fallbackSrc}" title="${alt}" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+        }, { once: true });
+      }
+      return;
+    }
+
+    // ---- Uploaded / hosted video (local mp4/webm or any non-YouTube URL).
+    // YouTube links — embed via iframe. YouTube handles encoding, adaptive
+    // bitrate, and playback compatibility itself.
     if (project.video) {
+      const youtubeId = getYouTubeId(project.video);
+
+      if (youtubeId) {
+        const embedSrc = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?rel=0&modestbranding=1&playsinline=1`;
+        wrap.innerHTML = `<iframe class="cs-hero-media" src="${embedSrc}" title="${alt}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        return;
+      }
+
+      // Otherwise, treat it as a direct uploaded video file, as before.
       const videoSrc = escapeHtml(mediaUrl(project.video));
       const posterFallback = project.videoPoster || project.image || '';
       const posterSrc = posterFallback ? escapeHtml(mediaUrl(posterFallback)) : '';
@@ -405,6 +480,17 @@
       : '';
 
     if (item.type === 'video' && item.url) {
+      const youtubeId = getYouTubeId(item.url);
+      if (youtubeId) {
+        const embedSrc = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?rel=0&modestbranding=1&playsinline=1`;
+        return `
+          <figure class="cs-gallery-item" data-gallery-index="${index}">
+            <div class="cs-gallery-media">
+              <iframe class="cs-gallery-video" src="${embedSrc}" title="${alt}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            ${caption}
+          </figure>`;
+      }
       const src = escapeHtml(mediaUrl(item.url));
       const poster = item.poster ? escapeHtml(mediaUrl(item.poster)) : '';
       return `
@@ -478,6 +564,8 @@
     });
 
     // Wire video playback via shared observer; respect reduced motion.
+    // Only native <video> elements are observed here — YouTube <iframe>
+    // embeds manage their own playback and have no .play()/.pause().
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const videos = wrap.querySelectorAll('video.cs-gallery-video');
     videos.forEach((v) => {
