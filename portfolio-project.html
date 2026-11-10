@@ -134,85 +134,10 @@
       </div>
     </section>
 
-    <!-- 04. ABOUT THE PROJECT -->
-    <section class="section-pad-sm" id="cs-about-section" hidden>
-      <div class="container story-split">
-        <div class="kicker-block">
-          <span class="kicker">About the project</span>
-        </div>
-        <div class="cs-copy-block" id="cs-about-body"></div>
-      </div>
-    </section>
-
-    <!-- 05. THE CHALLENGE -->
-    <section class="section-pad-sm" id="cs-challenge-section" style="background: var(--surface);" hidden>
-      <div class="container story-split">
-        <div class="kicker-block">
-          <span class="kicker">The challenge</span>
-        </div>
-        <div class="cs-copy-block" id="cs-challenge-body"></div>
-      </div>
-    </section>
-
-    <!-- 06. WHAT WE DID -->
-    <section class="section-pad-sm" id="cs-approach-section" hidden>
-      <div class="container story-split">
-        <div class="kicker-block">
-          <span class="kicker">What we did</span>
-        </div>
-        <div class="cs-copy-block" id="cs-approach-body"></div>
-      </div>
-    </section>
-
-    <!-- SERVICES (compact tags, shown within What We Did when present) -->
+    <!-- SERVICES (compact tags) -->
     <section class="cs-services-section" id="cs-services-section" hidden>
       <div class="container">
         <div class="cs-services-list" id="cs-services-list"></div>
-      </div>
-    </section>
-
-    <!-- 07. THE WORK / MEDIA GALLERY -->
-    <section class="section-pad-sm" id="cs-gallery-section" hidden>
-      <div class="container">
-        <span class="kicker">The work</span>
-        <div class="cs-gallery" id="cs-gallery"></div>
-      </div>
-    </section>
-
-    <!-- 08. THE OUTCOME -->
-    <section class="section-pad-sm" id="cs-outcome-section" style="background: var(--surface);" hidden>
-      <div class="container story-split">
-        <div class="kicker-block">
-          <span class="kicker">The outcome</span>
-        </div>
-        <div class="cs-copy-block" id="cs-outcome-body"></div>
-      </div>
-    </section>
-
-    <!-- 09. RESULTS / METRICS -->
-    <section class="section-pad-sm" id="cs-results-section" hidden>
-      <div class="container" style="text-align:center;">
-        <span class="kicker">Results</span>
-        <div class="stats-grid cs-results-grid" id="cs-results-grid" style="margin-top: 40px;"></div>
-      </div>
-    </section>
-
-    <!-- 10. CLIENT TESTIMONIAL -->
-    <section class="section-pad-sm" id="cs-testimonial-section" hidden>
-      <div class="container">
-        <div style="text-align:center;">
-          <span class="kicker">What the client says</span>
-        </div>
-        <div class="testimonial-spotlight">
-          <p class="testimonial-quote" id="cs-testimonial-quote"></p>
-          <div class="testimonial-person">
-            <div class="avatar-mark" id="cs-testimonial-avatar"></div>
-            <div>
-              <div class="name" id="cs-testimonial-name"></div>
-              <div class="role" id="cs-testimonial-role"></div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -286,7 +211,9 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
-<script>window.STSK_API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? (window.location.protocol + "//" + window.location.hostname + ":5000") : "https://scale-to-sky-real-backend.onrender.com";</script>
+<script>window.STSK_API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? (window.location.protocol + "//" + window.location.hostname + ":5000") : "https://scale-to-sky-real-backend.onrender.com";
+window.STSK_BUNNY_LIBRARY_ID = "784252"; // public Bunny Stream library ID (not secret) — used to build the iframe embed URL
+window.STSK_BUNNY_PULL_ZONE = "vz-9b4196a6-3e0.b-cdn.net"; // e.g. vz-abc12345-def.b-cdn.net — used to build Bunny auto-thumbnail URLs</script>
 <script src="js/analytics.js"></script>
 <script src="js/main.js"></script>
 <script src="js/portfolio-project.js"></script>

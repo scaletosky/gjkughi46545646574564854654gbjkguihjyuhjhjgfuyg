@@ -68,57 +68,15 @@
     return `portfolio-project.html?slug=${encodeURIComponent(slug)}`;
   }
 
-  // Fired via IntersectionObserver so at most one video plays/loads at a
-  // time per card and offscreen videos are paused — avoids downloading
-  // or decoding every project video at once (spec: sections 11/37/59).
-  // Also enforces at most one *actively playing* video across the whole
-  // grid at any time (spec: section 17) — on a small/mobile viewport
-  // more than one card can be simultaneously "visible" per the observer
-  // threshold, but only the most-recently-intersected one is allowed to
-  // actually autoplay; the rest stay paused on their poster frame until
-  // they become the active one.
-  let mediaObserver = null;
-  let currentlyPlayingVideo = null;
-  function getMediaObserver() {
-    if (mediaObserver) return mediaObserver;
-    if (!('IntersectionObserver' in window)) return null;
-    mediaObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target;
-          if (entry.isIntersecting) {
-            if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
-              currentlyPlayingVideo.pause();
-            }
-            currentlyPlayingVideo = video;
-            // Best-effort: browsers may still block autoplay; failure is
-            // silent and the poster/first-frame remains visible.
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-            if (currentlyPlayingVideo === video) currentlyPlayingVideo = null;
-          }
-        });
-      },
-      { threshold: 0.35 }
-    );
-    return mediaObserver;
-  }
+  // Phase 12 — grid cards no longer render a native <video> element for
+  // project media (Bunny video now shows as a poster-image card with a
+  // play-button overlay, same reasoning the old Drive-card path used —
+  // an iframe embed is too heavy for a grid of many cards), so the
+  // play/pause-on-visibility IntersectionObserver this section used to
+  // need is no longer applicable and has been removed along with it.
 
-  /**
-   * Extracts a Google Drive file ID from a raw Drive share/view URL or
-   * returns the raw string if it's already a bare file ID. Returns '' for
-   * empty/null input. Used to detect when a Drive URL was accidentally
-   * saved into the `video` field (via "Paste URL" mode) instead of into
-   * `driveVideoId` — that URL would be blocked by the browser's CSP when
-   * used as a <video src>, so we normalise it here and treat it the same
-   * as driveVideoId.
-   */
-  function extractDriveFileId(raw) {
-    if (!raw) return '';
-    const match = raw.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
-    return match ? match[1] : '';
-  }
+  const BUNNY_LIBRARY_ID = window.STSK_BUNNY_LIBRARY_ID || '';
+  const BUNNY_PULL_ZONE = window.STSK_BUNNY_PULL_ZONE || '';
 
   /**
    * Resolves a stored media reference to a usable URL. Locally uploaded
@@ -131,106 +89,65 @@
     return /^https?:\/\//i.test(path) ? path : API_BASE + path;
   }
 
+  // Bunny Stream auto-generates a thumbnail per video at this fixed
+  // path on the library's pull zone.
+  function bunnyThumbnailUrl(bunnyVideoId) {
+    if (!BUNNY_PULL_ZONE) return '';
+    return `https://${BUNNY_PULL_ZONE}/${encodeURIComponent(bunnyVideoId)}/thumbnail.jpg`;
+  }
+
+  // Same iframe embed Bunny Stream uses on the Case Study page
+  // (portfolio-project.js's bunnyEmbedUrl) — reused here so a grid
+  // card can play the video in place instead of only linking out to
+  // the full project page.
+  function bunnyEmbedUrl(bunnyVideoId) {
+    // controls=false strips Bunny's native control bar (volume/gear/
+    // fullscreen) so it doesn't overflow the narrower grid-card thumb;
+    // our own centered .pf-play icon (kept visible via CSS) is the
+    // only play/pause affordance on these compact cards.
+    return `https://iframe.mediadelivery.net/embed/${encodeURIComponent(BUNNY_LIBRARY_ID)}/${encodeURIComponent(bunnyVideoId)}?autoplay=true&responsive=true&controls=false`;
+  }
+
   /**
    * Renders a project's primary media as image or video with a safe
-   * fallback chain: video -> videoPoster -> image -> placeholder. Never
-   * lets a missing/broken source collapse the card (spec: sections
-   * 10/25/58/65). `eager` requests eager-loading for the single
-   * above-the-fold featured image only (spec: section 24).
+   * fallback chain: Bunny video (poster card) -> image -> placeholder.
+   * Never lets a missing/broken source collapse the card (spec:
+   * sections 10/25/58/65). `eager` requests eager-loading for the
+   * single above-the-fold featured image only (spec: section 24).
    *
-   * Video takes priority whenever it's present, regardless of the
-   * project's `mediaType` — a project can carry both an image and a
-   * video (image doubling as poster/fallback), so `project.video` alone
-   * is the signal to show a video.
-   *
-   * Special case: if `project.video` is a Google Drive share URL (e.g.
-   * https://drive.google.com/file/d/.../view?usp=sharing), it cannot be
-   * used as a <video src> — the browser blocks it with a CSP/CORP error.
-   * We detect this and treat it as a driveVideoId instead, falling back
-   * to the poster/image with a play-button overlay (same as the
-   * explicit driveVideoId path). The admin should use the "Google Drive"
-   * tab in the Edit Project modal going forward so the ID is stored in
-   * the correct field.
+   * Phase 12 — a listing-grid card never embeds Bunny's iframe player
+   * directly; it shows the video's poster/thumbnail image with a
+   * play-button overlay instead, same as the old Drive-card pattern.
+   * Clicking the card opens the full case study page, where the Bunny
+   * player actually embeds and plays.
    */
   function renderProjectMedia(project, eager) {
     const placeholder = 'assets/images/logo-mark-small.png';
     const alt = escapeHtml(project.title || '');
     const loadingAttr = eager ? '' : ' loading="lazy"';
 
-    // Resolve effective Drive ID: prefer the dedicated driveVideoId field,
-    // but also handle the case where a Drive URL was accidentally pasted
-    // into the `video` URL field (the "Paste URL" tab in the admin modal).
-    const effectiveDriveId = project.driveVideoId
-      || (project.video ? extractDriveFileId(project.video) : '');
-
-    // Determine if the `video` field holds a real non-Drive hosted URL
-    // (mp4/webm CDN link, /uploads/ path, etc.) that is safe to use as
-    // a <video src>. A Drive URL in this field must be treated as a
-    // driveVideoId instead (see comment above).
-    const videoIsDriveUrl = project.video && extractDriveFileId(project.video) !== '';
-    const safeVideoSrc = project.video && !videoIsDriveUrl ? project.video : null;
-
-    // Google Drive video card: show poster/image with a play-button overlay.
-    // Can't embed a Drive iframe in a listing card (too heavy), so the image
-    // + play icon communicates "this is a video" and clicking opens the full
-    // case study page where the Drive player embeds without any YouTube logo.
-    if (effectiveDriveId && !safeVideoSrc) {
-      const thumbSrc = project.videoPoster
-        ? escapeHtml(resolveMediaUrl(project.videoPoster))
-        : project.image
-          ? escapeHtml(resolveMediaUrl(project.image))
-          : escapeHtml(placeholder);
-      return `<div class="project-media drive-video-card" style="position:relative;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;">
-        <img src="${thumbSrc}" alt="${alt}"${loadingAttr} style="width:100%;height:100%;object-fit:cover;opacity:0.85;" onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">
+    if (project.bunnyVideoId) {
+      const customPoster = project.videoPosterMode === 'custom' && project.videoPoster
+        ? resolveMediaUrl(project.videoPoster)
+        : '';
+      const autoThumb = bunnyThumbnailUrl(project.bunnyVideoId);
+      const thumbSrc = customPoster || autoThumb || (project.image ? resolveMediaUrl(project.image) : placeholder);
+      return `<div class="project-media bunny-video-card" style="position:relative;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;">
+        <img src="${escapeHtml(thumbSrc)}" alt="${alt}"${loadingAttr} style="width:100%;height:100%;object-fit:cover;opacity:0.85;" onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">
         <div style="position:absolute;width:48px;height:48px;background:rgba(255,255,255,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="#222" style="margin-left:2px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </div>
       </div>`;
     }
 
-    if (safeVideoSrc) {
-      // safeVideoSrc is guaranteed to NOT be a Google Drive URL (Drive URLs
-      // are handled above via the effectiveDriveId path). This prevents the
-      // ERR_BLOCKED_BY_RESPONSE / CSP error that occurs when a Drive share
-      // link is used directly as a <video src>.
-      const videoSrc = escapeHtml(resolveMediaUrl(safeVideoSrc));
-      const posterFallback = project.image ? resolveMediaUrl(project.image) : placeholder;
-      const posterSrc = project.videoPoster ? escapeHtml(resolveMediaUrl(project.videoPoster)) : escapeHtml(posterFallback);
-      // onerror fallback: if the video itself fails to load, swap the
-      // whole element for the poster/placeholder image so the card never
-      // shows a broken player (spec: section 25).
-      return `<video class="project-media" src="${videoSrc}" poster="${posterSrc}" muted loop playsinline preload="metadata" aria-label="${alt}" onerror="this.replaceWith(Object.assign(document.createElement('img'),{src:'${posterSrc}',alt:'${alt}',className:'project-media'}))"></video>`;
-    }
-
     const imgSrc = project.image ? escapeHtml(resolveMediaUrl(project.image)) : escapeHtml(placeholder);
     return `<img class="project-media" src="${imgSrc}" alt="${alt}"${loadingAttr} onerror="this.onerror=null;this.src='${escapeHtml(placeholder)}'">`;
-  }
-
-  /**
-   * Registers a card's <video> (if any) with the shared observer so it
-   * only plays while visible, and pauses on prefers-reduced-motion.
-   */
-  function wireCardMedia(container) {
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const videos = container.querySelectorAll('video.project-media');
-    if (!videos.length) return;
-
-    if (reduceMotion) {
-      videos.forEach((v) => v.removeAttribute('autoplay'));
-      return;
-    }
-
-    const observer = getMediaObserver();
-    videos.forEach((v) => {
-      if (observer) observer.observe(v);
-      else v.play().catch(() => {}); // no IO support: best-effort static autoplay
-    });
   }
 
   // Premium video treatment: a "Video" badge (always visible) plus a glass
   // play button (revealed on hover/focus) on any project that has a video.
   function hasVideo(project) {
-    return Boolean(project.video || project.driveVideoId);
+    return Boolean(project.bunnyVideoId);
   }
   function videoOverlayHtml(project) {
     if (!hasVideo(project)) return '';
@@ -255,16 +172,26 @@
     const trackAttr = `data-portfolio-track="${escapeHtml(project.slug || project._id || '')}"`;
 
     const media = renderProjectMedia(project, false);
-    const thumb = detailsHref
-      ? `<a href="${escapeHtml(detailsHref)}" class="portfolio-thumb-link" ${trackAttr}><div class="portfolio-thumb">${media}${videoOverlayHtml(project)}</div></a>`
-      : `<div class="portfolio-thumb">${media}${videoOverlayHtml(project)}</div>`;
+
+    // Video cards: clicking the thumbnail plays the video in place
+    // (see bindVideoCardPlay) instead of opening the Case Study page,
+    // so this is a non-navigating button rather than the <a> the
+    // image-only path below still uses. "View Details" below remains
+    // a normal link to the project page either way.
+    const thumb = hasVideo(project)
+      ? `<button type="button" class="portfolio-thumb-link portfolio-thumb-play" data-bunny-video-id="${escapeHtml(project.bunnyVideoId)}" aria-label="Play video: ${escapeHtml(project.title || '')}"><div class="portfolio-thumb">${media}${videoOverlayHtml(project)}</div></button>`
+      : detailsHref
+        ? `<a href="${escapeHtml(detailsHref)}" class="portfolio-thumb-link" ${trackAttr}><div class="portfolio-thumb">${media}${videoOverlayHtml(project)}</div></a>`
+        : `<div class="portfolio-thumb">${media}${videoOverlayHtml(project)}</div>`;
 
     const titleInner = `${escapeHtml(project.title)} ${arrowIconSvg()}`;
-    const titleMarkup = detailsHref
+    const titleMarkup = (detailsHref && !hasVideo(project))
       ? `<a href="${escapeHtml(detailsHref)}" class="portfolio-title" ${trackAttr}>${titleInner}</a>`
       : `<div class="portfolio-title">${escapeHtml(project.title)}</div>`;
 
-    const viewDetails = detailsHref
+    // No "View Details" link on video cards — they only play inline now,
+    // there is no separate Case Study page to send visitors to for these.
+    const viewDetails = (detailsHref && !hasVideo(project))
       ? `<a href="${escapeHtml(detailsHref)}" class="portfolio-view-details" ${trackAttr}>View Details ${arrowIconSvg()}</a>`
       : '';
 
@@ -298,21 +225,37 @@
     const href = caseStudyUrl(project) || '#portfolio-work';
     const trackAttr = `data-portfolio-track="${escapeHtml(project.slug || project._id || '')}"`;
     const media = renderProjectMedia(project, eagerMedia);
-    const cardClass = (variant === 'primary' ? 'work-card work-card-primary' : 'work-card work-card-secondary') + (hasVideo(project) ? ' is-video' : '');
+    const isVideo = hasVideo(project);
+    const cardClass = (variant === 'primary' ? 'work-card work-card-primary' : 'work-card work-card-secondary') + (isVideo ? ' is-video' : '');
+    const style = `style="--stagger-delay:${index * 90}ms"`;
 
-    return `
-      <a href="${escapeHtml(href)}" class="${cardClass} reveal reveal-stagger" ${trackAttr} data-category="${filterSlug}" style="--stagger-delay:${index * 90}ms">
-        <div class="work-thumb">${media}${videoOverlayHtml(project)}</div>
-        <div class="work-meta">
+    const meta = `
           <div>
             <div class="work-category">${escapeHtml(project.category)}</div>
             <div class="work-name">${escapeHtml(project.title)}</div>
             ${project.shortDescription ? `<p class="work-desc">${escapeHtml(project.shortDescription)}</p>` : ''}
             ${project.clientName ? `<p class="work-client">${escapeHtml(project.clientName)}</p>` : ''}
-            <span class="work-view-details">View Details <svg class="work-arrow-inline" viewBox="0 0 18 18" fill="none"><path d="M4 14L14 4M6 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            ${isVideo ? '' : '<span class="work-view-details">View Details <svg class="work-arrow-inline" viewBox="0 0 18 18" fill="none"><path d="M4 14L14 4M6 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'}
           </div>
-          <svg class="work-arrow" viewBox="0 0 18 18" fill="none"><path d="M4 14L14 4M6 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
+          ${isVideo ? '' : '<svg class="work-arrow" viewBox="0 0 18 18" fill="none"><path d="M4 14L14 4M6 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'}`;
+
+    // Video cards: a non-navigating button whose thumb plays inline
+    // (handled by the delegated .portfolio-thumb-play click listener
+    // below) instead of linking out to the Case Study page — same
+    // reasoning as the grid cards in cardHtml().
+    if (isVideo) {
+      return `
+      <button type="button" class="${cardClass} reveal reveal-stagger portfolio-thumb-play" data-bunny-video-id="${escapeHtml(project.bunnyVideoId)}" aria-label="Play video: ${escapeHtml(project.title || '')}" data-category="${filterSlug}" ${style}>
+        <div class="work-thumb portfolio-thumb">${media}${videoOverlayHtml(project)}</div>
+        <div class="work-meta">${meta}</div>
+      </button>
+    `;
+    }
+
+    return `
+      <a href="${escapeHtml(href)}" class="${cardClass} reveal reveal-stagger" ${trackAttr} data-category="${filterSlug}" ${style}>
+        <div class="work-thumb">${media}${videoOverlayHtml(project)}</div>
+        <div class="work-meta">${meta}</div>
       </a>
     `;
   }
@@ -387,17 +330,60 @@
         : primaryHtml;
       featuredGrid.classList.toggle('work-grid-editorial', featuredProjects.length > 1);
       observeRevealFor(featuredGrid);
-      wireCardMedia(featuredGrid);
     }
     featuredSection.hidden = false;
   }
 
   function render() {
     grid.innerHTML = projects.map(cardHtml).join('');
-    wireCardMedia(grid);
     applyFilter(activeFilter);
     renderFeaturedWork();
   }
+
+  // Delegated (survives re-renders/filtering, unlike binding per card)
+  // click handler for the .portfolio-thumb-play buttons added in
+  // cardHtml(): swaps the static thumbnail for Bunny's real iframe
+  // player and plays it in place, instead of navigating to the Case
+  // Study page. Delegated at the document level so it also covers the
+  // Featured Work grid once/if that section adopts the same button
+  // markup.
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.portfolio-thumb-play');
+    if (!btn || btn.classList.contains('is-playing')) return;
+
+    const bunnyVideoId = btn.dataset.bunnyVideoId;
+    if (!bunnyVideoId || !BUNNY_LIBRARY_ID) return;
+
+    const thumb = btn.querySelector('.portfolio-thumb');
+    if (!thumb) return;
+
+    // controls=false (see bunnyEmbedUrl) strips Bunny's native bar, so
+    // our own centered play/pause icon is layered back on top of the
+    // iframe here and kept for the life of the card — nothing else.
+    thumb.innerHTML = `<iframe class="portfolio-thumb-iframe" src="${bunnyEmbedUrl(bunnyVideoId)}" title="${btn.getAttribute('aria-label') || 'Project video'}" loading="lazy" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>` +
+      `<span class="pf-play pf-play-toggle" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>`;
+    // The button only exists to trigger this swap; once the real
+    // player is in place, further clicks should hit our play/pause
+    // toggle, not re-trigger this handler (guarded above via
+    // is-playing, not btn.disabled — a disabled button blocks
+    // pointer-events on its own descendants in most browsers, which
+    // silently ate clicks on the toggle after the first pause/resume).
+    btn.classList.add('is-playing');
+
+    const iframe = thumb.querySelector('.portfolio-thumb-iframe');
+    const toggle = thumb.querySelector('.pf-play-toggle');
+    let playing = true;
+    toggle.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      // Bunny Stream's embed listens for this postMessage API to
+      // control playback from outside the iframe.
+      iframe.contentWindow.postMessage(JSON.stringify({
+        method: playing ? 'pause' : 'play'
+      }), 'https://iframe.mediadelivery.net');
+      playing = !playing;
+      toggle.classList.toggle('is-paused', !playing);
+    });
+  });
 
   function applyFilter(filter) {
     activeFilter = filter;

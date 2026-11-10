@@ -119,13 +119,7 @@
     renderMeta(project);
     renderHero(project);
     renderTextSection('cs-description-section', 'cs-description-body', project.description);
-    renderTextSection('cs-about-section', 'cs-about-body', project.aboutProject);
-    renderTextSection('cs-challenge-section', 'cs-challenge-body', project.challenge);
-    renderApproachAndServices(project);
-    renderGallery(project.gallery);
-    renderTextSection('cs-outcome-section', 'cs-outcome-body', project.outcome);
-    renderResults(project.results);
-    renderTestimonial(project.testimonial);
+    renderServices(project);
     observeReveal();
   }
 
@@ -157,16 +151,27 @@
     const ogUrlEl = document.getElementById('case-study-og-url');
     if (ogUrlEl) ogUrlEl.setAttribute('content', currentUrl);
 
-    // og:image: prefer the primary image, then videoPoster if the
-    // project is video-led (spec: section 37).
+    // og:image: for a video-led project, prefer a custom videoPoster if
+    // the admin set one, else Bunny's own auto-generated thumbnail;
+    // otherwise fall back to the primary image (spec: section 37).
     let ogImagePath = '';
-    if (project.mediaType === 'video' && project.videoPoster) ogImagePath = project.videoPoster;
-    else if (project.image) ogImagePath = project.image;
-    else if (project.videoPoster) ogImagePath = project.videoPoster;
+    let ogImageIsAbsolute = false;
+    if (project.mediaType === 'video' && project.videoPosterMode === 'custom' && project.videoPoster) {
+      ogImagePath = project.videoPoster;
+    } else if (project.mediaType === 'video' && project.bunnyVideoId && BUNNY_PULL_ZONE) {
+      ogImagePath = `https://${BUNNY_PULL_ZONE}/${encodeURIComponent(project.bunnyVideoId)}/thumbnail.jpg`;
+      ogImageIsAbsolute = true;
+    } else if (project.image) {
+      ogImagePath = project.image;
+    } else if (project.videoPoster) {
+      ogImagePath = project.videoPoster;
+    }
 
     let ogImageEl = document.querySelector('meta[property="og:image"]');
     if (ogImagePath) {
-      const absoluteUrl = /^https?:\/\//i.test(ogImagePath) ? ogImagePath : `${window.location.origin}${API_BASE}${ogImagePath}`;
+      const absoluteUrl = ogImageIsAbsolute || /^https?:\/\//i.test(ogImagePath)
+        ? ogImagePath
+        : `${window.location.origin}${API_BASE}${ogImagePath}`;
       if (!ogImageEl) {
         ogImageEl = document.createElement('meta');
         ogImageEl.setAttribute('property', 'og:image');
@@ -257,29 +262,23 @@
   }
 
   // ---- 09/10/19/20/21. Main media (image or video), with fallback
-  // chain: video -> videoPoster -> image -> neutral placeholder
-  // (spec: sections 21/78/79). ----
+  // chain: Bunny video -> image -> neutral placeholder.
+  // Phase 12 — Bunny Stream is the single video source; the old
+  // Drive/YouTube/local-upload branches are gone. ----
   const PLACEHOLDER_IMAGE = 'assets/images/logo-mark-small.png';
+  const BUNNY_LIBRARY_ID = window.STSK_BUNNY_LIBRARY_ID || '';
+  const BUNNY_PULL_ZONE = window.STSK_BUNNY_PULL_ZONE || '';
 
   function mediaUrl(path) {
     if (!path) return '';
     return /^https?:\/\//i.test(path) || path.startsWith('/uploads/') ? `${API_BASE}${path}` : path;
   }
 
-  // Recognizes YouTube URLs in any common form (watch?v=, youtu.be/,
-  // shorts/, embed/) and pulls out the 11-character video ID. Returns
-  // null for anything else, including plain uploaded video paths, so
-  // those keep using the native <video> element untouched.
-  function getYouTubeId(url) {
-    if (!url || typeof url !== 'string') return null;
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtu\.be\/)([A-Za-z0-9_-]{11})/,
-    ];
-    for (const re of patterns) {
-      const match = url.match(re);
-      if (match) return match[1];
-    }
-    return null;
+  // Bunny Stream's standard iframe embed URL — adaptive HLS, built-in
+  // controls, works in any evergreen browser with no extra JS needed on
+  // this site's side. responsive=true lets it fill its container.
+  function bunnyEmbedUrl(bunnyVideoId) {
+    return `https://iframe.mediadelivery.net/embed/${encodeURIComponent(BUNNY_LIBRARY_ID)}/${encodeURIComponent(bunnyVideoId)}?autoplay=false&responsive=true`;
   }
 
   function renderMainMedia(project) {
@@ -288,94 +287,15 @@
 
     const alt = escapeHtml(project.title || '');
 
-    // ---- Google Drive video — highest priority when driveVideoId is set,
-    // OR when project.video contains a Drive share URL (i.e. the admin used
-    // the "Paste URL" tab in the Edit Project modal instead of the "Google
-    // Drive" tab — both result in the same Drive file needing an iframe embed).
-    // Embeds cleanly via Drive's /file/d/<ID>/preview URL.
-    // No YouTube logo, no YouTube branding, no third-party player chrome.
-    // Drive handles adaptive streaming; viewer must have access (shared link).
-    function extractDriveFileId(raw) {
-      if (!raw) return '';
-      const match = raw.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
-      return match ? match[1] : '';
-    }
-    const effectiveDriveId = project.driveVideoId
-      || (project.video ? extractDriveFileId(project.video) : '');
-    if (effectiveDriveId) {
-      const driveId = encodeURIComponent(effectiveDriveId);
-      // Use Google Drive's direct streaming URL instead of /preview iframe.
-      // /preview triggers Drive's own sub-frame loads (accounts.google.com)
-      // which get blocked by CSP frame-ancestors on many hosting setups.
-      // uc?export=download&id=<ID> gives a direct streamable MP4 URL that
-      // works inside a native <video> tag — no iframe, no CSP issues, and
-      // the browser's own fullscreen button works natively.
-      const directSrc = `https://drive.google.com/uc?export=download&id=${driveId}`;
-      const posterFallback = project.videoPoster || project.image || '';
-      const posterSrc = posterFallback ? escapeHtml(mediaUrl(posterFallback)) : '';
-      wrap.innerHTML = `<video class="cs-hero-media" src="${directSrc}"${posterSrc ? ` poster="${posterSrc}"` : ''} controls playsinline preload="metadata" aria-label="${alt}" controlsList="nodownload"></video>`;
-
-      const videoEl = wrap.querySelector('video');
-      if (videoEl) {
-        // Once metadata loads we know the real video dimensions.
-        // Set the container's aspect-ratio to match exactly so there
-        // are zero black bars — works for portrait (9:16), landscape
-        // (16:9), square, or any other ratio stored in Drive.
-        videoEl.addEventListener('loadedmetadata', () => {
-          const vw = videoEl.videoWidth;
-          const vh = videoEl.videoHeight;
-          if (vw && vh) {
-            wrap.style.aspectRatio = `${vw} / ${vh}`;
-          }
-        }, { once: true });
-
-        videoEl.addEventListener('error', () => {
-          // Fallback: if direct stream fails (e.g. file not publicly shared),
-          // fall back to the /preview iframe as a last resort.
-          const fallbackSrc = `https://drive.google.com/file/d/${driveId}/preview`;
-          wrap.innerHTML = `<iframe class="cs-hero-media" src="${fallbackSrc}" title="${alt}" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
-        }, { once: true });
-      }
+    if (project.bunnyVideoId && BUNNY_LIBRARY_ID) {
+      const embedSrc = bunnyEmbedUrl(project.bunnyVideoId);
+      wrap.innerHTML = `<iframe class="cs-hero-media" src="${embedSrc}" title="${alt}" loading="lazy" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>`;
       return;
     }
 
-    // ---- Uploaded / hosted video (local mp4/webm or any non-YouTube URL).
-    // YouTube links — embed via iframe. YouTube handles encoding, adaptive
-    // bitrate, and playback compatibility itself.
-    if (project.video) {
-      const youtubeId = getYouTubeId(project.video);
-
-      if (youtubeId) {
-        const embedSrc = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?rel=0&modestbranding=1&playsinline=1`;
-        wrap.innerHTML = `<iframe class="cs-hero-media" src="${embedSrc}" title="${alt}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-        return;
-      }
-
-      // Otherwise, treat it as a direct uploaded video file, as before.
-      const videoSrc = escapeHtml(mediaUrl(project.video));
-      const posterFallback = project.videoPoster || project.image || '';
-      const posterSrc = posterFallback ? escapeHtml(mediaUrl(posterFallback)) : '';
-      wrap.innerHTML = `<video class="cs-hero-media" src="${videoSrc}"${posterSrc ? ` poster="${posterSrc}"` : ''} muted loop playsinline preload="metadata" aria-label="${alt}"></video>`;
-
-      const videoEl = wrap.querySelector('video');
-      if (videoEl) {
-        // If the primary video itself fails, fall back to poster/image/
-        // placeholder rather than showing a broken player (spec: 21/25).
-        videoEl.addEventListener('error', () => {
-          const fallback = project.videoPoster || project.image || PLACEHOLDER_IMAGE;
-          wrap.innerHTML = `<img class="cs-hero-media" src="${escapeHtml(mediaUrl(fallback) || PLACEHOLDER_IMAGE)}" alt="${alt}">`;
-        }, { once: true });
-
-        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (!reduceMotion) {
-          videoEl.play().catch(() => {}); // best-effort; poster remains if blocked
-        }
-      }
-      return;
-    }
-
-    // Image path, or video project missing a usable video URL — fall
-    // back through image -> placeholder (spec: section 77/78).
+    // No Bunny video (image-type project, or a video project whose
+    // upload hasn't been set yet) — fall back through image ->
+    // placeholder (spec: section 77/78).
     const imgSrc = mediaUrl(project.image) || PLACEHOLDER_IMAGE;
     wrap.innerHTML = `<img class="cs-hero-media" src="${escapeHtml(imgSrc)}" alt="${alt}" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}'">`;
   }
@@ -396,35 +316,12 @@
     section.hidden = false;
   }
 
-  // ---- 14/15. What We Did (approach + solution) + Services tags ----
-  function renderApproachAndServices(project) {
-    const section = document.getElementById('cs-approach-section');
-    const body = document.getElementById('cs-approach-body');
-    if (section && body) {
-      const hasApproach = Boolean(project.approach);
-      const hasSolution = Boolean(project.solution);
-
-      if (!hasApproach && !hasSolution) {
-        section.hidden = true;
-        body.innerHTML = '';
-      } else {
-        body.innerHTML = '';
-        if (hasApproach) {
-          renderParagraphs(body, project.approach);
-        }
-        if (hasSolution) {
-          const solutionKicker = document.createElement('p');
-          solutionKicker.className = 'cs-inline-kicker';
-          solutionKicker.textContent = 'The solution';
-          body.appendChild(solutionKicker);
-          const solutionWrap = document.createElement('div');
-          renderParagraphs(solutionWrap, project.solution);
-          Array.from(solutionWrap.children).forEach((el) => body.appendChild(el));
-        }
-        section.hidden = false;
-      }
-    }
-
+  // ---- Services tags. The case-study narrative sections (About,
+  // Challenge, What We Did/Solution, Outcome, Results, Gallery,
+  // Testimonial) were removed from the simplified admin form, so their
+  // render logic was removed here too — Services is the one section
+  // from that old group the admin asked to keep. ----
+  function renderServices(project) {
     const servicesSection = document.getElementById('cs-services-section');
     const servicesList = document.getElementById('cs-services-list');
     if (servicesSection && servicesList) {
@@ -439,207 +336,6 @@
         servicesSection.hidden = false;
       }
     }
-  }
-
-  // ---- 16/17/18/19/20/21. Media Gallery ----
-  // Shared IntersectionObserver so gallery videos only load/play near
-  // the viewport and pause when scrolled away (spec: section 20/57).
-  // Also enforces at most one actively playing gallery video at a time
-  // (spec: section 17) — the 2-up layout can put two video items in
-  // the viewport simultaneously.
-  let galleryObserver = null;
-  let currentlyPlayingGalleryVideo = null;
-  function getGalleryObserver() {
-    if (galleryObserver) return galleryObserver;
-    if (!('IntersectionObserver' in window)) return null;
-    galleryObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target;
-          if (entry.isIntersecting) {
-            if (currentlyPlayingGalleryVideo && currentlyPlayingGalleryVideo !== video) {
-              currentlyPlayingGalleryVideo.pause();
-            }
-            currentlyPlayingGalleryVideo = video;
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-            if (currentlyPlayingGalleryVideo === video) currentlyPlayingGalleryVideo = null;
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-    return galleryObserver;
-  }
-
-  function galleryItemHtml(item, index) {
-    const alt = escapeHtml(item.caption || `Project media ${index + 1}`);
-    const caption = item.caption
-      ? `<p class="cs-gallery-caption">${escapeHtml(item.caption)}</p>`
-      : '';
-
-    if (item.type === 'video' && item.url) {
-      const youtubeId = getYouTubeId(item.url);
-      if (youtubeId) {
-        const embedSrc = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?rel=0&modestbranding=1&playsinline=1`;
-        return `
-          <figure class="cs-gallery-item" data-gallery-index="${index}">
-            <div class="cs-gallery-media">
-              <iframe class="cs-gallery-video" src="${embedSrc}" title="${alt}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-            ${caption}
-          </figure>`;
-      }
-      const src = escapeHtml(mediaUrl(item.url));
-      const poster = item.poster ? escapeHtml(mediaUrl(item.poster)) : '';
-      return `
-        <figure class="cs-gallery-item" data-gallery-index="${index}">
-          <div class="cs-gallery-media">
-            <video class="cs-gallery-video" src="${src}"${poster ? ` poster="${poster}"` : ''} muted loop playsinline preload="none" aria-label="${alt}"></video>
-          </div>
-          ${caption}
-        </figure>`;
-    }
-
-    if (item.type === 'image' && item.url) {
-      const src = escapeHtml(mediaUrl(item.url));
-      return `
-        <figure class="cs-gallery-item" data-gallery-index="${index}">
-          <div class="cs-gallery-media">
-            <img class="cs-gallery-img" src="${src}" alt="${alt}" loading="lazy" onerror="this.closest('.cs-gallery-item').remove()">
-          </div>
-          ${caption}
-        </figure>`;
-    }
-
-    // Invalid item (missing url or unknown type) — skip entirely rather
-    // than breaking the rest of the gallery (spec: section 79).
-    return '';
-  }
-
-  function renderGallery(gallery) {
-    const section = document.getElementById('cs-gallery-section');
-    const wrap = document.getElementById('cs-gallery');
-    if (!section || !wrap) return;
-
-    const items = Array.isArray(gallery) ? gallery.filter((g) => g && g.url && (g.type === 'image' || g.type === 'video')) : [];
-
-    if (items.length === 0) {
-      section.hidden = true;
-      wrap.innerHTML = '';
-      return;
-    }
-
-    // Sort by displayOrder ascending; stable fallback preserves
-    // original array order for equal/missing displayOrder values
-    // (spec: section 16).
-    const sorted = items
-      .map((item, originalIndex) => ({ item, originalIndex }))
-      .sort((a, b) => {
-        const orderA = Number.isFinite(a.item.displayOrder) ? a.item.displayOrder : 0;
-        const orderB = Number.isFinite(b.item.displayOrder) ? b.item.displayOrder : 0;
-        if (orderA !== orderB) return orderA - orderB;
-        return a.originalIndex - b.originalIndex;
-      })
-      .map((entry) => entry.item);
-
-    // Adaptive editorial layout: large / 2-up / large / 2-up... (spec:
-    // section 17). Every 3rd item (0-indexed: 0, 3, 6...) is full-width.
-    wrap.innerHTML = sorted
-      .map((item, i) => galleryItemHtml(item, i))
-      .join('');
-
-    // Assign layout classes based on position among successfully
-    // rendered items (invalid items already produced empty strings and
-    // are absent from the DOM).
-    const renderedItems = wrap.querySelectorAll('.cs-gallery-item');
-    if (renderedItems.length === 0) {
-      section.hidden = true;
-      return;
-    }
-    renderedItems.forEach((el, i) => {
-      el.classList.add(i % 3 === 0 ? 'cs-gallery-item-full' : 'cs-gallery-item-half');
-      el.classList.add('reveal');
-    });
-
-    // Wire video playback via shared observer; respect reduced motion.
-    // Only native <video> elements are observed here — YouTube <iframe>
-    // embeds manage their own playback and have no .play()/.pause().
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const videos = wrap.querySelectorAll('video.cs-gallery-video');
-    videos.forEach((v) => {
-      if (reduceMotion) return;
-      const observer = getGalleryObserver();
-      if (observer) observer.observe(v);
-    });
-
-    section.hidden = false;
-  }
-
-  // ---- 23/24/60. Results / Metrics ----
-  function renderResults(results) {
-    const section = document.getElementById('cs-results-section');
-    const grid = document.getElementById('cs-results-grid');
-    if (!section || !grid) return;
-
-    const valid = Array.isArray(results)
-      ? results.filter((r) => r && r.label && r.value)
-      : [];
-
-    if (valid.length === 0) {
-      section.hidden = true;
-      grid.innerHTML = '';
-      return;
-    }
-
-    const sorted = valid
-      .map((item, originalIndex) => ({ item, originalIndex }))
-      .sort((a, b) => {
-        const orderA = Number.isFinite(a.item.displayOrder) ? a.item.displayOrder : 0;
-        const orderB = Number.isFinite(b.item.displayOrder) ? b.item.displayOrder : 0;
-        if (orderA !== orderB) return orderA - orderB;
-        return a.originalIndex - b.originalIndex;
-      })
-      .map((entry) => entry.item);
-
-    // Values are rendered exactly as stored — no numeric parsing, no
-    // added "+", no unit conversion (spec: section 60).
-    grid.innerHTML = sorted
-      .map(
-        (r) => `
-        <div class="stat-item">
-          <div class="stat-num">${escapeHtml(r.value)}</div>
-          <div class="stat-label">${escapeHtml(r.label)}</div>
-          ${r.description ? `<div class="cs-result-desc">${escapeHtml(r.description)}</div>` : ''}
-        </div>`
-      )
-      .join('');
-
-    section.hidden = false;
-  }
-
-  // ---- 25/26/61. Client Testimonial ----
-  function renderTestimonial(testimonial) {
-    const section = document.getElementById('cs-testimonial-section');
-    if (!section) return;
-
-    if (!testimonial || !testimonial.quote || !testimonial.name) {
-      section.hidden = true;
-      return;
-    }
-
-    const quoteEl = document.getElementById('cs-testimonial-quote');
-    const nameEl = document.getElementById('cs-testimonial-name');
-    const roleEl = document.getElementById('cs-testimonial-role');
-    const avatarEl = document.getElementById('cs-testimonial-avatar');
-
-    if (quoteEl) quoteEl.textContent = `"${testimonial.quote}"`;
-    if (nameEl) nameEl.textContent = testimonial.name;
-    if (roleEl) roleEl.textContent = [testimonial.role, testimonial.company].filter(Boolean).join(', ');
-    if (avatarEl) avatarEl.textContent = testimonial.initials || '';
-
-    section.hidden = false;
   }
 
   // ---- Reveal-on-scroll for dynamically inserted content (main.js's

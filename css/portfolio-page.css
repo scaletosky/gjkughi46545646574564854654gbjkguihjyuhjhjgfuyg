@@ -62,9 +62,62 @@
 .pf .portfolio-title { font-size: 1.2rem; }
 .pf .portfolio-item:hover .portfolio-thumb { box-shadow: 0 22px 50px -22px rgba(70,45,120,.45); }
 
-/* ---------- Premium video cards ---------- */
-.pf .is-video .work-thumb, .pf .is-video .portfolio-thumb { box-shadow: 0 0 0 1px rgba(162,61,224,.35), 0 20px 50px -22px var(--glow); }
-.pf .drive-video-card > div { display: none !important; }
+/* ---------- Premium video cards ----------
+   Unscoped (not .pf-prefixed) so the same compact 9:16 "premium" video
+   card renders identically on the Portfolio page's grid AND the
+   Homepage's Featured Work section (.work-card.is-video there). */
+.is-video .work-thumb, .is-video .portfolio-thumb {
+  box-shadow: 0 0 0 1px rgba(162,61,224,.35), 0 20px 50px -22px var(--glow, rgba(109,61,245,.55));
+  transition: transform 420ms cubic-bezier(.2,.8,.2,1), box-shadow 420ms ease;
+}
+.bunny-video-card > div { display: none !important; }
+
+/* Video cards are portrait (9:16) instead of the default 16/11 photo
+   ratio above — overrides it specifically where .is-video applies.
+   Capped narrower + centered so the card reads as a sleek, compact
+   "premium" tile instead of a full-width poster. */
+.is-video .portfolio-thumb {
+  aspect-ratio: 9/16;
+  max-width: 230px;
+  margin: 0 auto;
+  border-radius: 20px;
+}
+.is-video:hover .portfolio-thumb {
+  transform: translateY(-6px);
+  box-shadow: 0 0 0 1px rgba(162,61,224,.5), 0 28px 60px -20px var(--glow, rgba(109,61,245,.55));
+}
+
+/* Homepage's Featured Work card uses .work-thumb (not .portfolio-thumb)
+   for its video cards — same 9:16 compact treatment. */
+.is-video .work-thumb {
+  aspect-ratio: 9/16;
+  max-width: 230px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+.is-video.work-card:hover .work-thumb {
+  transform: translateY(-6px);
+  box-shadow: 0 0 0 1px rgba(162,61,224,.5), 0 28px 60px -20px var(--glow, rgba(109,61,245,.55));
+}
+
+/* .portfolio-thumb-play is a <button> standing in for the <a> used on
+   non-video cards (so clicking a video card plays it in place instead
+   of navigating to the Case Study page) — strip the browser's default
+   button chrome so it looks identical to that <a>. Covers both the
+   grid-card thumb button and the Featured Work card button (which
+   reuses .work-card's own width/background, just needs the button
+   reset layered on). */
+.portfolio-thumb-play {
+  display: block; width: 100%; padding: 0; margin: 0; border: 0; background: none;
+  font: inherit; color: inherit; text-align: inherit; cursor: pointer;
+}
+.portfolio-thumb-play.is-playing { cursor: default; }
+
+/* Fills the 9:16 thumb once the click handler swaps in Bunny's real
+   iframe player. */
+.portfolio-thumb-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .pf-vbadge { position: absolute; top: 16px; left: 16px; z-index: 3; display: inline-flex; align-items: center; gap: 8px;
   padding: 7px 13px 7px 11px; border-radius: 99px; color: #fff; font: 600 .75rem var(--font-display);
   background: rgba(18,12,38,.55); border: 1px solid rgba(255,255,255,.2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
@@ -75,6 +128,15 @@
   transition: opacity var(--transition), transform var(--transition); }
 .pf-play svg { margin-left: 3px; }
 .pf-reel .pf-play { top: 42%; }
+
+/* Play/pause toggle shown once the Bunny iframe has replaced the
+   static thumb (controls=false strips Bunny's own bar, so this is the
+   only playback control left). Hidden while playing — only appears on
+   hover, or always once paused, same as a normal video player. */
+.pf-play-toggle { pointer-events: auto; cursor: pointer; width: 56px; height: 56px; margin: -28px 0 0 -28px; opacity: 0; }
+.portfolio-thumb:hover .pf-play-toggle,
+.pf-play-toggle.is-paused { opacity: 1; transform: scale(1); }
+.pf-play-toggle svg { width: 20px; height: 20px; }
 a:hover > .work-thumb .pf-play, .portfolio-item:hover .pf-play, a:focus-visible > .work-thumb .pf-play { opacity: 1; transform: scale(1); }
 @keyframes pf-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,92,174,.7); } 70%,100% { box-shadow: 0 0 0 9px rgba(255,92,174,0); } }
 
