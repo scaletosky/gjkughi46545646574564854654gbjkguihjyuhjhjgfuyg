@@ -361,7 +361,7 @@
     // our own centered play/pause icon is layered back on top of the
     // iframe here and kept for the life of the card — nothing else.
     thumb.innerHTML = `<iframe class="portfolio-thumb-iframe" src="${bunnyEmbedUrl(bunnyVideoId)}" title="${btn.getAttribute('aria-label') || 'Project video'}" loading="lazy" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>` +
-      `<span class="pf-play pf-play-toggle" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>`;
+      `<span class="pf-play pf-play-toggle"><span class="pf-toggle-icon"><svg class="i-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg><svg class="i-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span></span>`;
     // The button only exists to trigger this swap; once the real
     // player is in place, further clicks should hit our play/pause
     // toggle, not re-trigger this handler (guarded above via
@@ -372,16 +372,59 @@
 
     const iframe = thumb.querySelector('.portfolio-thumb-iframe');
     const toggle = thumb.querySelector('.pf-play-toggle');
+    toggle.setAttribute('role', 'button');
+    toggle.setAttribute('tabindex', '0');
+    toggle.setAttribute('aria-label', 'Pause video');
+
+    // Bunny's embed speaks the player.js protocol: every message MUST
+    // carry context:'player.js' + version, otherwise the iframe silently
+    // ignores it (this was why the toggle did nothing before).
+    const PJS = { context: 'player.js', version: '0.0.11' };
+    const BUNNY_ORIGIN = 'https://iframe.mediadelivery.net';
+    const send = (method, value) => {
+      if (!iframe.contentWindow) return;
+      const msg = Object.assign({}, PJS, { method });
+      if (value !== undefined) msg.value = value;
+      iframe.contentWindow.postMessage(JSON.stringify(msg), BUNNY_ORIGIN);
+    };
+
     let playing = true;
-    toggle.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      // Bunny Stream's embed listens for this postMessage API to
-      // control playback from outside the iframe.
-      iframe.contentWindow.postMessage(JSON.stringify({
-        method: playing ? 'pause' : 'play'
-      }), 'https://iframe.mediadelivery.net');
-      playing = !playing;
+    let hideTimer = null;
+    const render = (flash) => {
       toggle.classList.toggle('is-paused', !playing);
+      toggle.setAttribute('aria-label', playing ? 'Pause video' : 'Play video');
+      if (flash) {
+        // Show the icon briefly after a tap (touch screens have no hover),
+        // then fade it away while the video is playing.
+        toggle.classList.add('show-icon');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => toggle.classList.remove('show-icon'), 1200);
+      }
+    };
+
+    // Keep our icon in sync with the real player state.
+    const onMessage = (ev) => {
+      if (ev.source !== iframe.contentWindow) return;
+      let data = ev.data;
+      if (typeof data === 'string') { try { data = JSON.parse(data); } catch (_) { return; } }
+      if (!data || data.context !== 'player.js') return;
+      if (data.event === 'ready') {
+        ['play', 'pause', 'ended'].forEach((name) => send('addEventListener', name));
+      } else if (data.event === 'play') { playing = true; render(false); }
+      else if (data.event === 'pause' || data.event === 'ended') { playing = false; render(false); }
+    };
+    window.addEventListener('message', onMessage);
+
+    const doToggle = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      send(playing ? 'pause' : 'play');
+      playing = !playing;
+      render(true);
+    };
+    toggle.addEventListener('click', doToggle);
+    toggle.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') doToggle(ev);
     });
   });
 
