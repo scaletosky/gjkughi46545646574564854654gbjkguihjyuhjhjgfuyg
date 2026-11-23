@@ -5,27 +5,46 @@
 /* ---- Fonts ---- */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
-/* ---- Design tokens ---- */
+/* ============================================================
+   THEME TOKENS
+   ------------------------------------------------------------
+   Two layers:
+
+   1) BRAND tokens — the purple/pink identity. These stay fixed
+      across both themes (same brand in light or dark mode), so
+      they live outside the theme blocks.
+
+   2) THEME tokens — everything that actually changes between
+      light and dark (backgrounds, text, borders, shadows, the
+      ambient ::after fade, grid-line tint). [data-theme="dark"]
+      overrides only this second group. Every existing component
+      below already reads these same variable names (--text,
+      --surface, --border, --white, --muted, --shadow-soft, etc.)
+      so the override is invisible to the rest of the stylesheet
+      — nothing past this block needs to change for theming to
+      work.
+
+   Default (no data-theme attribute, or data-theme="light") =
+   the original design, untouched.
+   ============================================================ */
 :root {
+  /* ---- Brand (fixed across themes) ---- */
   --primary: #6D3DF5;
   --primary-dark: #5125C7;
   --primary-light: #F0EBFF;
   --accent-pink: #E8399B;
   --accent-pink-dark: #C21F7E;
+  /* Text/icons that sit ON a brand-coloured surface (purple/gradient
+     buttons, badges, CTA card, dark glass strips). Always white, in
+     both themes. Do NOT use var(--white) for this: in dark mode
+     --white is the dark card colour (#15101F). */
+  --on-brand: #FFFFFF;
   --gradient-premium: linear-gradient(120deg, #6D3DF5 0%, #A23DE0 50%, #E8399B 100%);
   --gradient-premium-hover: linear-gradient(120deg, #5125C7 0%, #8B2BC7 50%, #C21F7E 100%);
-  --text: #17151F;
-  --muted: #6F6A78;
-  --border: #E9E5F2;
-  --white: #FFFFFF;
-  --surface: #FAF9FC;
 
   --radius-sm: 12px;
   --radius-md: 20px;
   --radius-lg: 28px;
-
-  --shadow-soft: 0 12px 40px rgba(70, 45, 120, 0.08);
-  --shadow-hover: 0 24px 70px rgba(70, 45, 120, 0.15);
 
   --transition: 350ms cubic-bezier(.2,.8,.2,1);
 
@@ -34,6 +53,66 @@
 
   --container-max: 1240px;
   --header-h: 84px;
+
+  /* ---- Theme: LIGHT (default — original design, unchanged) ---- */
+  --text: #17151F;
+  --muted: #6F6A78;
+  --border: #E9E5F2;
+  --white: #FFFFFF;
+  --surface: #FAF9FC;
+
+  --shadow-soft: 0 12px 40px rgba(70, 45, 120, 0.08);
+  --shadow-hover: 0 24px 70px rgba(70, 45, 120, 0.15);
+
+  /* body + hero background washes (light) */
+  --bg-body: linear-gradient(180deg, #F7F1FF 0%, #FDFCFF 18%, #FFFFFF 50%, #FDFBFE 82%, #FCF1F8 100%);
+  --bg-hero: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 40%, #FCEEF7 100%);
+  --bg-section-wash: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 45%, #FCEEF7 100%);
+  --hero-fade-edge: var(--white);
+  --grid-line: rgba(23, 21, 31, 0.035);
+  --callout-warning-bg: #FBF2F1;
+  --tag-pink-soft: #FDEBF6;
+
+  /* sticky header (after scrolling) */
+  --header-bg-scrolled: rgba(255, 255, 255, 0.86);
+  --header-bg-scrolled-solid: rgba(255, 255, 255, 0.97);
+  --header-shadow-scrolled: 0 8px 24px rgba(23, 21, 31, 0.04);
+
+  /* Accent colour for TEXT/LINKS on the page surface. Light = same as
+     before (--primary-dark). Use this instead of --primary-dark for
+     any text that must stay readable in dark mode. */
+  --accent-text: var(--primary-dark);
+}
+
+/* ---- Theme: DARK ----
+   Matches the supplied dark-mode reference design: near-black
+   violet base, soft magenta-purple glow on card borders, light
+   text. Brand gradient (--primary/--accent-pink) is unchanged —
+   only the surface/text/border layer flips. */
+[data-theme="dark"] {
+  --text: #F5F2FA;
+  --muted: #B6AEC4;
+  --border: rgba(168, 100, 220, 0.28);
+  --white: #15101F;      /* "white" = the lightest surface in dark mode (cards) */
+  --surface: #0D0718;    /* page surface / alt sections */
+
+  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --shadow-hover: 0 0 60px rgba(168, 61, 224, 0.35);
+
+  --bg-body: linear-gradient(180deg, #0D0718 0%, #120320 50%, #0D0718 100%);
+  --bg-hero: linear-gradient(170deg, #11031C 0%, #120320 45%, #0F0319 100%);
+  --bg-section-wash: linear-gradient(170deg, #0F0319 0%, #120320 45%, #0D0718 100%);
+  --hero-fade-edge: #0D0718;
+  --grid-line: rgba(220, 180, 255, 0.05);
+  --callout-warning-bg: rgba(199, 67, 61, 0.15);
+  --tag-pink-soft: rgba(232, 57, 155, 0.15);
+
+  /* sticky header (after scrolling) — dark glass instead of white */
+  --header-bg-scrolled: rgba(13, 7, 24, 0.82);
+  --header-bg-scrolled-solid: rgba(13, 7, 24, 0.97);
+  --header-shadow-scrolled: 0 8px 30px rgba(0, 0, 0, 0.45);
+
+  --accent-text: #B79CFF;   /* 8.7:1 on #120320 (was #5125C7 = 2.3:1) */
 }
 
 /* ---- Reset ---- */
@@ -63,8 +142,9 @@ html { scroll-behavior: auto; }
 body {
   font-family: var(--font-body);
   color: var(--text);
-  background: linear-gradient(180deg, #F7F1FF 0%, #FDFCFF 18%, #FFFFFF 50%, #FDFBFE 82%, #FCF1F8 100%);
+  background: var(--bg-body);
   background-attachment: fixed;
+  transition: background-color var(--transition);
   line-height: 1.65;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -183,7 +263,7 @@ p.lead {
 
 .btn-primary {
   background: var(--gradient-premium);
-  color: var(--white);
+  color: #FFFFFF; /* fixed: sits on the brand gradient in both themes (was var(--white), which is dark in dark mode) */
   box-shadow: 0 8px 24px rgba(168, 45, 190, 0.32);
 }
 .btn-primary:hover {
@@ -262,11 +342,11 @@ p.lead {
 }
 
 .site-header.is-scrolled {
-  background: rgba(255, 255, 255, 0.86);
+  background: var(--header-bg-scrolled);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom-color: var(--border);
-  box-shadow: 0 8px 24px rgba(23, 21, 31, 0.04);
+  box-shadow: var(--header-shadow-scrolled);
 }
 
 /* Low-end devices: backdrop-filter blur is one of the more GPU-expensive
@@ -275,7 +355,7 @@ p.lead {
    background — same visual read (header stands out from content behind
    it) without the blur compositing cost. */
 html.perf-lite .site-header.is-scrolled {
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--header-bg-scrolled-solid);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -389,10 +469,43 @@ html.perf-lite .site-header.is-scrolled {
 }
 
 .main-nav a.active {
-  color: var(--primary-dark);
+  color: var(--accent-text);
 }
 
 .header-cta { display: flex; align-items: center; gap: 20px; }
+
+/* ---- Theme toggle button ----
+   One button, two icons (sun/moon) layered on top of each other;
+   [data-theme] on <html> controls which one is visible via opacity +
+   rotation, so there's a single source of truth for the switch and
+   no JS-driven icon swap needed on click — only the attribute change. */
+.theme-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text);
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+.theme-toggle:hover { transform: translateY(-2px); border-color: var(--primary); }
+.theme-toggle svg {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  transition: opacity var(--transition), transform var(--transition);
+}
+.theme-toggle .icon-sun { opacity: 1; transform: rotate(0deg) scale(1); }
+.theme-toggle .icon-moon { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+[data-theme="dark"] .theme-toggle .icon-sun { opacity: 0; transform: rotate(90deg) scale(0.5); }
+[data-theme="dark"] .theme-toggle .icon-moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+.mobile-panel .theme-toggle { margin: 0 0 20px; }
 
 .hamburger {
   display: none;
@@ -478,14 +591,14 @@ body.menu-open { overflow: hidden; }
   align-items: center;
   padding: calc(var(--header-h) + 32px) 0 40px;
   overflow: hidden;
-  background: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 40%, #FCEEF7 100%);
+  background: var(--bg-hero);
 }
 .hero::after {
   content: '';
   position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 120px;
-  background: linear-gradient(to bottom, transparent, var(--white));
+  background: linear-gradient(to bottom, transparent, var(--hero-fade-edge));
   pointer-events: none;
 }
 
@@ -503,8 +616,8 @@ body.menu-open { overflow: hidden; }
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, rgba(23,21,31,0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(23,21,31,0.035) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 78%);
@@ -712,7 +825,7 @@ body.menu-open { overflow: hidden; }
   right: 4%;
   z-index: 1;
   background: var(--primary);
-  color: var(--white);
+  color: var(--on-brand);
   border: none;
 }
 .eco-label {
@@ -979,6 +1092,30 @@ html.perf-lite .hero-word {
   will-change: transform;
 }
 
+/* ---- Dark mode refinements: HERO ----
+   Contrast (WCAG) measured against hero bg #120320:
+     headline em      3.4 -> 8.7   capabilities 5.5 -> 7.7
+     trustline        4.4 -> 6.9   scroll hint  3.4 -> 6.2
+   Warm tan glow looked like a brown smudge on violet, so it becomes
+   an on-brand magenta glow in dark mode. */
+[data-theme="dark"] .hero-tagline em { color: var(--accent-text); }
+[data-theme="dark"] .hero-capabilities { opacity: 0.9; }
+[data-theme="dark"] .hero-capabilities span { color: var(--accent-text); opacity: 0.7; }
+[data-theme="dark"] .hero-trustline { opacity: 0.85; }
+[data-theme="dark"] .hero-scroll { opacity: 0.8; }
+[data-theme="dark"] .hero-scroll:hover { opacity: 1; }
+[data-theme="dark"] .hero-glow {
+  background: radial-gradient(circle, rgba(138, 92, 255, 0.30), transparent 70%);
+}
+[data-theme="dark"] .hero-glow-warm {
+  background: radial-gradient(circle, rgba(232, 57, 155, 0.16), transparent 72%);
+}
+[data-theme="dark"] .hero-arc { border-color: rgba(168, 100, 220, 0.18); }
+[data-theme="dark"] .hero-scroll-wrapper.hst-active .hero-scroll-cover {
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.5);
+  border-top: 1px solid var(--border);
+}
+
 /* Progress is calculated with easing already applied in JS, so the CSS
    side stays a plain linear read of the custom property. */
 
@@ -1067,30 +1204,37 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   }
 }
 
-/* Mobile: usability over effect. JS also shortens the scroll distance
-   and skips the sticky pin entirely below 640px (see main.js) — these
-   rules are a safety net if that width threshold ever changes. */
+/* Mobile: same layered transition as desktop/tablet, just toned down
+   further — smaller scale/opacity/filter swing and a shorter cover
+   travel distance so it stays light on touch devices and low-powered
+   phones while still animating on scroll. */
 @media (max-width: 640px) {
   .hero-scroll-wrapper.hst-active .hero {
-    transform: none;
-    opacity: 1;
-    filter: none;
+    transform: scale(calc(1 + (0.02 * var(--hst-progress, 0))));
+    opacity: calc(1 - (0.03 * var(--hst-progress, 0)));
+    filter: brightness(calc(1 - (0.015 * var(--hst-progress, 0))));
   }
-  .hero-scroll-wrapper.hst-active .hero-field,
-  .hero-scroll-wrapper.hst-active .hero-inner,
-  .hero-scroll-wrapper.hst-active .hero-grid-lines,
-  .hero-scroll-wrapper.hst-active .hero-arc {
-    transform: none;
+  .hero-scroll-wrapper.hst-active .hero-field {
+    transform: scale(calc(1 + (0.03 * var(--hst-progress, 0))));
+  }
+  .hero-scroll-wrapper.hst-active .hero-inner {
+    transform: scale(calc(1 + (0.008 * var(--hst-progress, 0))));
+  }
+  .hero-scroll-wrapper.hst-active .hero-grid-lines {
+    transform: scale(calc(1 + (0.02 * var(--hst-progress, 0))));
   }
   .hero-scroll-wrapper.hst-active .hero-glow {
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(calc(1 + (0.035 * var(--hst-progress, 0))));
   }
   .hero-scroll-wrapper.hst-active .hero-glow-warm {
-    transform: none;
+    transform: scale(calc(1 + (0.03 * var(--hst-progress, 0))));
+  }
+  .hero-scroll-wrapper.hst-active .hero-arc {
+    transform: translateX(-50%) scale(calc(1 + (0.025 * var(--hst-progress, 0))));
   }
   .hero-scroll-wrapper.hst-active .hero-scroll-cover {
     border-radius: 16px 16px 0 0;
-    transform: translateY(calc((1 - var(--hst-progress, 0)) * 4vh));
+    transform: translateY(calc((1 - var(--hst-progress, 0)) * 6vh));
   }
 }
 
@@ -1137,7 +1281,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   justify-content: space-between;
   min-height: 260px;
   padding: 30px 26px 26px;
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
@@ -1208,7 +1352,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   transition: transform var(--transition), background var(--transition), color var(--transition);
 }
 .service-card:hover .service-card-num {
-  color: var(--white);
+  color: var(--on-brand);
   background: var(--gradient-premium);
   transform: translateY(-2px) scale(1.05);
 }
@@ -1219,7 +1363,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent-pink-dark);
-  background: #FDEBF6;
+  background: var(--tag-pink-soft);
   padding: 5px 11px;
   border-radius: 999px;
 }
@@ -1306,7 +1450,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
 }
 .service-card:hover .service-card-arrow {
   transform: translate(4px, -4px);
-  color: var(--white);
+  color: var(--on-brand);
   background: var(--gradient-premium);
 }
 .service-card-arrow svg { width: 16px; height: 16px; }
@@ -1512,7 +1656,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
 .create-panel-featured {
   grid-row: span 2;
   min-height: 552px;
-  background: linear-gradient(165deg, #F5EEFF 0%, #FDFBFF 45%, #FCEEF7 100%);
+  background: var(--bg-section-wash);
   padding: 32px;
 }
 .create-panel-featured::before {
@@ -1830,7 +1974,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
 
 .diff-panel {
   position: relative;
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: 26px;
   box-shadow: 0 10px 32px rgba(70, 45, 120, 0.06);
@@ -2014,7 +2158,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   font-size: 0.7rem;
 }
 .diff-mark-check {
-  color: var(--white);
+  color: var(--on-brand);
   background: var(--gradient-premium);
   transition: transform 400ms cubic-bezier(.2,.8,.2,1);
 }
@@ -2302,10 +2446,11 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   top: -160px; right: -100px;
   pointer-events: none;
 }
-.final-cta h2 { color: var(--white); max-width: 640px; margin: 0 auto; }
-.final-cta p { color: rgba(255,255,255,0.75); margin: 20px auto 36px; max-width: 480px; }
-.final-cta .btn-primary { background: var(--white); color: var(--primary-dark); box-shadow: none; }
-.final-cta .btn-primary:hover { background: var(--surface); }
+.final-cta h2 { color: var(--on-brand); max-width: 640px; margin: 0 auto; }
+.final-cta p { color: rgba(255,255,255,0.9); margin: 20px auto 36px; max-width: 480px; }
+/* White pill on the purple card in BOTH themes (fixed colours, not theme tokens) */
+.final-cta .btn-primary { background: var(--on-brand); color: var(--primary-dark); box-shadow: none; }
+.final-cta .btn-primary:hover { background: var(--primary-light); }
 
 @media (max-width: 640px) {
   .final-cta { margin: 0 20px; padding: 64px 28px; }
@@ -2366,7 +2511,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
    ============================================================ */
 .page-hero {
   padding: calc(var(--header-h) + 90px) 0 80px;
-  background: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 45%, #FCEEF7 100%);
+  background: var(--bg-section-wash);
 }
 .page-hero h1 { max-width: 780px; }
 .page-hero p.lead { margin-top: 22px; }
@@ -2394,7 +2539,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
 .portfolio-hero {
   padding: calc(var(--header-h) + 120px) 0 96px;
   text-align: center;
-  background: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 45%, #FCEEF7 100%);
+  background: var(--bg-section-wash);
 }
 .portfolio-hero-inner {
   max-width: 900px;
@@ -2473,7 +2618,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   align-items: center;
   padding: calc(var(--header-h) + 64px) 0 56px;
   overflow: hidden;
-  background: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 45%, #FCEEF7 100%);
+  background: var(--bg-section-wash);
 }
 
 .services-hero-stats {
@@ -2561,7 +2706,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   padding-top: calc(var(--header-h) + 64px);
   padding-bottom: 64px;
   overflow: hidden;
-  background: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 40%, #FCEEF7 100%);
+  background: var(--bg-section-wash);
 }
 .about-hero::after {
   content: '';
@@ -2964,7 +3109,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   min-width: 0;
 }
 .founder-name {
-  color: var(--white);
+  color: var(--on-brand);
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 600;
@@ -2985,7 +3130,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.08);
-  color: var(--white);
+  color: var(--on-brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3246,7 +3391,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.8125rem;
-  color: var(--white);
+  color: var(--on-brand);
   flex-shrink: 0;
   width: 28px;
   height: 28px;
@@ -3526,7 +3671,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
 .filter-btn.is-active {
   background: var(--primary);
   border-color: var(--primary);
-  color: var(--white);
+  color: var(--on-brand);
   box-shadow: 0 8px 20px rgba(109, 61, 245, 0.24);
 }
 .filter-btn.is-active:hover { transform: none; }
@@ -3655,7 +3800,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   position: relative;
   padding: 40px 36px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 55%, #FCEEF7 100%);
+  background: var(--bg-section-wash);
   border: 1px solid var(--border);
   overflow: hidden;
 }
@@ -3829,7 +3974,7 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
   height: 15px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: var(--white);
+  border-top-color: var(--on-brand);
   animation: submit-spin 0.7s linear infinite;
   flex-shrink: 0;
 }
@@ -4216,7 +4361,7 @@ button.service-card {
   align-items: center;
   justify-content: center;
 }
-.sc-video-play svg { width: 11px; height: 11px; color: var(--white); }
+.sc-video-play svg { width: 11px; height: 11px; color: var(--on-brand); }
 .sc-video-bar { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 3px; border-radius: 2px; background: var(--border); }
 .sc-video-bar::after {
   content: '';
@@ -4790,7 +4935,7 @@ body.modal-open {
 }
 .process-step {
   padding: 26px 24px;
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
@@ -4805,7 +4950,7 @@ body.modal-open {
   display: inline-flex; align-items: center; justify-content: center;
   width: 38px; height: 38px;
   font-family: var(--font-display); font-weight: 800;
-  font-size: 0.9375rem; color: var(--white); margin-bottom: 16px;
+  font-size: 0.9375rem; color: var(--on-brand); margin-bottom: 16px;
   background: var(--gradient-premium);
   border-radius: 12px;
 }
@@ -4940,7 +5085,7 @@ body.modal-open {
   width: 100%;
 }
 .solution-option {
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
@@ -4981,7 +5126,7 @@ body.modal-open {
 }
 .solution-option-trigger[aria-expanded="true"] .solution-option-visual {
   background: var(--gradient-premium);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .solution-option-trigger:hover .solution-option-visual {
   transform: scale(1.06);
@@ -5007,7 +5152,7 @@ body.modal-open {
   transform: rotate(90deg);
   background: var(--gradient-premium);
   border-color: transparent;
-  color: var(--white);
+  color: var(--on-brand);
 }
 .solution-option-answer {
   display: grid;
@@ -5077,14 +5222,14 @@ body.modal-open {
   align-items: center;
   gap: 24px;
   padding: 26px 24px;
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
   transition: background var(--transition), transform var(--transition), box-shadow var(--transition), border-color var(--transition);
 }
 .industry-row:hover {
-  background: #ffffff;
+  background: var(--white);
   transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
   border-color: var(--primary-light);
@@ -5131,7 +5276,7 @@ body.modal-open {
 }
 .industry-row:hover .industry-row-icon {
   background: var(--gradient-premium);
-  color: var(--white);
+  color: var(--on-brand);
   transform: translateY(-2px) scale(1.05);
 }
 .industry-row-icon svg { width: 18px; height: 18px; }
@@ -5251,7 +5396,7 @@ body.modal-open {
   flex: 1;
   min-width: 0;
   padding: 22px 16px;
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
@@ -5523,7 +5668,7 @@ body.modal-open {
 .svc-timeline-step:hover .svc-timeline-num {
   border-color: var(--primary);
   background: var(--primary);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .svc-timeline-title {
   font-family: var(--font-display);
@@ -5874,7 +6019,7 @@ body.modal-open {
   position: sticky;
   top: var(--header-h);
   z-index: 50;
-  background: rgba(255,255,255,0.92);
+  background: var(--header-bg-scrolled);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
@@ -5902,7 +6047,7 @@ body.modal-open {
 .svc-subnav a:hover { background: var(--surface); color: var(--text); }
 .svc-subnav a.is-active { background: var(--primary-light); color: var(--primary-dark); }
 #faqs.faq-social-section { scroll-margin-top: calc(var(--header-h) + 56px); }
-html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255,255,255,0.98); }
+html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--header-bg-scrolled-solid); }
 
 @media (prefers-reduced-motion: reduce) {
   .svc-goodknow-body, .svc-goodknow-icon::before, .svc-goodknow-icon::after,
@@ -5922,7 +6067,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   padding: calc(var(--header-h) + 96px) 0 72px;
   text-align: center;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(170deg, #F5EEFF 0%, #FDFBFF 45%, #FCEEF7 100%);
+  background: var(--bg-section-wash);
 }
 .blog-hero-inner { max-width: 760px; margin: 0 auto; }
 .blog-hero .kicker {
@@ -6153,7 +6298,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
@@ -6190,7 +6335,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 }
 .blog-topic-pill:hover:not(:disabled) .blog-topic-pill-count {
   background: var(--gradient-premium);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .blog-topic-pill:disabled .blog-topic-pill-count { background: var(--surface); color: var(--muted); }
 
@@ -6529,7 +6674,7 @@ html.perf-lite .svc-subnav { backdrop-filter: none; -webkit-backdrop-filter: non
 }
 .blog-callout p { margin: 0; color: var(--text); font-size: 0.9375rem; line-height: 1.65; }
 .blog-callout p + p { margin-top: 10px; }
-.blog-callout--warning { border-left-color: #C7433D; background: #FBF2F1; }
+.blog-callout--warning { border-left-color: #C7433D; background: var(--callout-warning-bg); }
 .blog-callout--warning .blog-callout-label { color: #C7433D; }
 
 /* ---- Inline CTA (mid-article) ---- */

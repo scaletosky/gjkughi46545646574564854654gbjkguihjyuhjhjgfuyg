@@ -3,7 +3,7 @@
 .pf { --ink:#120C26; --ink-2:#1d1440; --glow:rgba(109,61,245,.55); }
 
 /* ---------- Hero ---------- */
-.pf-hero { padding: calc(var(--header-h) + 72px) 0 88px;
+.pf-hero { padding: calc(var(--header-h) + 72px) 0 48px;
   background: radial-gradient(55% 70% at 88% 0%, rgba(109,61,245,.13), transparent 62%),
               radial-gradient(40% 60% at 0% 100%, rgba(232,57,155,.09), transparent 60%), var(--white); }
 .pf-hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 64px; align-items: center; }
@@ -24,6 +24,26 @@
 .pf-caps a:hover { color: var(--primary-dark); }
 .pf-caps a:hover svg { transform: translate(3px,-3px); }
 .pf-caps a:focus-visible, .pf .filter-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 8px; }
+
+/* ---------- Stats strip (sits between Hero and Showreel to break up
+   the page rhythm before the dark video section) ---------- */
+.pf-stats { padding: 0 0 72px; }
+.pf-stats-inner { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 28px 0; text-align: center; padding-top: 32px; border-top: 1px solid var(--border); }
+.pf-stats-item { display: flex; align-items: baseline; gap: 10px; padding: 0 32px; }
+.pf-stats-item-text { align-items: center; }
+.pf-stats-num { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--primary); white-space: nowrap; }
+.pf-stats-label { font-size: .875rem; color: var(--muted); white-space: nowrap; }
+.pf-stats-label-strong { font-weight: 600; color: var(--text); }
+.pf-stats-divider { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
+@media (max-width: 900px) {
+  .pf-stats-inner { gap: 20px 0; }
+  .pf-stats-item { padding: 0 16px; }
+  .pf-stats-divider { display: none; }
+}
+@media (max-width: 560px) {
+  .pf-stats-inner { flex-direction: column; gap: 16px; }
+  .pf-stats-item { padding: 0; }
+}
 
 /* ---------- Section heads ---------- */
 .pf-sec-head { max-width: 720px; margin-bottom: 8px; }
@@ -57,7 +77,6 @@
 /* ---------- All projects ---------- */
 .pf-all { padding: 104px 0 88px; }
 .pf-all .filter-bar { justify-content: flex-start; margin: 36px 0 44px; }
-.pf .portfolio-grid { grid-template-columns: repeat(3, 1fr); gap: 48px 28px; margin-top: 0; }
 .pf .portfolio-thumb { border-radius: 22px; aspect-ratio: 16/11; }
 .pf .portfolio-title { font-size: 1.2rem; }
 .pf .portfolio-item:hover .portfolio-thumb { box-shadow: 0 22px 50px -22px rgba(70,45,120,.45); }
@@ -166,25 +185,40 @@
 a:hover > .work-thumb .pf-play, .portfolio-item:hover .pf-play, a:focus-visible > .work-thumb .pf-play { opacity: 1; transform: scale(1); }
 @keyframes pf-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,92,174,.7); } 70%,100% { box-shadow: 0 0 0 9px rgba(255,92,174,0); } }
 
-/* ---------- How we approach ---------- */
+/* ---------- How we approach: connected numbered timeline ----------
+   Replaces the old flat 4-col text grid (every card the same weight,
+   no visual connection between steps) with a single horizontal rail:
+   a thin connecting line runs behind the step numbers so the four
+   stages read as one continuous process rather than four unrelated
+   facts sitting next to each other. */
 .pf-how { background: var(--surface); padding: 96px 0; border-top: 1px solid var(--border); }
-.pf-how-list { list-style: none; margin: 48px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; }
-.pf-how-list li { position: relative; padding-top: 24px; border-top: 1px solid var(--border); }
-.pf-how-list li::before { content: ''; position: absolute; top: -2px; left: 0; width: 44px; height: 3px; border-radius: 3px; background: var(--gradient-premium); }
-.pf-how-list h3 { font: 700 1.1rem var(--font-display); margin: 0 0 10px; }
-.pf-how-list p { color: var(--muted); font-size: .95rem; line-height: 1.7; margin: 0; }
+.pf-timeline { list-style: none; margin: 56px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+.pf-timeline::before { content: ''; position: absolute; top: 23px; left: 0; right: 0; height: 2px; background: var(--border); z-index: 0; }
+.pf-timeline-step { position: relative; z-index: 1; padding: 0 28px 0 0; }
+.pf-timeline-num { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px;
+  border-radius: 50%; background: var(--white); border: 2px solid var(--border);
+  font: 800 .9375rem var(--font-display); color: var(--primary); margin-bottom: 22px; }
+.pf-timeline-step:nth-child(1) .pf-timeline-num { border-color: var(--primary); background: var(--gradient-premium); color: #fff; }
+.pf-timeline-body h3 { font: 700 1.1rem var(--font-display); margin: 0 0 10px; }
+.pf-timeline-body p { color: var(--muted); font-size: .95rem; line-height: 1.7; margin: 0; max-width: 30ch; }
+
+@media (max-width: 980px) {
+  .pf-timeline { grid-template-columns: 1fr 1fr; gap: 40px 28px; }
+  .pf-timeline::before { display: none; }
+}
+@media (max-width: 640px) {
+  .pf-timeline { grid-template-columns: 1fr; gap: 32px; }
+  .pf-timeline-body p { max-width: none; }
+}
 
 @media (max-width: 980px) {
   .pf-hero-grid { grid-template-columns: 1fr; gap: 44px; }
   .pf-reel .work-grid { grid-template-columns: 1fr; }
   .pf-reel .work-card-primary .work-thumb { aspect-ratio: 16/11; }
-  .pf .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
-  .pf-how-list { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
   .pf-hero { padding-bottom: 64px; }
   .pf-reel, .pf-all, .pf-how { padding: 72px 0; }
-  .pf .portfolio-grid, .pf-how-list { grid-template-columns: 1fr; }
   .pf-reel .work-meta { padding: 20px; }
   .pf-reel .work-card .work-thumb { aspect-ratio: 4/5; }
   .pf-reel .work-card-secondary .work-thumb { aspect-ratio: 4/3; }
@@ -192,3 +226,99 @@ a:hover > .work-thumb .pf-play, .portfolio-item:hover .pf-play, a:focus-visible 
   .pf-play { opacity: .95; transform: none; width: 58px; height: 58px; margin: -29px 0 0 -29px; }
 }
 @media (prefers-reduced-motion: reduce) { .pf-vbadge i { animation: none; } .pf-play { transition: none; } }
+/* ================= Portfolio grid: centered, premium, no big gaps =================
+   Flex-wrap instead of a fixed 3-col grid: cards keep a fixed, tasteful
+   width, sit centered, and wrap naturally. Video (reel) cards are
+   narrower portrait tiles; photo cards are a bit wider. Text sits
+   exactly under its own card, so nothing looks shifted or stranded. */
+.pf .portfolio-grid {
+  display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: flex-start;
+  gap: 44px 28px; margin-top: 0;
+}
+.pf .portfolio-grid[hidden] { display: none; }
+.pf .portfolio-item { flex: 0 1 320px; max-width: 320px; min-width: 0; }
+.pf .portfolio-item.is-video { flex: 0 1 210px; max-width: 210px; }
+
+.pf .portfolio-item.is-video .portfolio-thumb {
+  width: 100%; max-width: none; margin: 0; border-radius: 18px;
+}
+.pf .portfolio-info { margin-top: 18px; padding: 0 4px; }
+.pf .portfolio-cat { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+.pf .portfolio-title { font-size: 1.05rem; line-height: 1.3; margin-top: 4px; }
+.pf .portfolio-desc {
+  font-size: .92rem; line-height: 1.55; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.pf .portfolio-client { font-size: .82rem; color: var(--muted); }
+
+/* ---- Mobile: cards smaller + always SIDE BY SIDE (2 per row) ---- */
+@media (max-width: 640px) {
+  .pf .portfolio-grid { gap: 30px 14px; }
+  .pf .portfolio-item,
+  .pf .portfolio-item.is-video { flex: 0 0 calc(50% - 7px); max-width: calc(50% - 7px); }
+  .pf .portfolio-thumb { aspect-ratio: 4/5; border-radius: 16px; }
+  .pf .portfolio-item.is-video .portfolio-thumb { border-radius: 16px; }
+  .pf .portfolio-info { margin-top: 12px; padding: 0 2px; }
+  .pf .portfolio-cat { font-size: .66rem; }
+  .pf .portfolio-title { font-size: .95rem; }
+  .pf .portfolio-desc { font-size: .8rem; -webkit-line-clamp: 2; }
+  .pf .portfolio-client { font-size: .74rem; }
+  .pf-vbadge { top: 10px; left: 10px; font-size: .68rem; padding: 4px 9px; gap: 6px; }
+  .pf .portfolio-thumb .pf-play { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  .pf .portfolio-thumb .pf-play svg { width: 18px; height: 18px; }
+}
+/* Stack (one per row) ONLY when there is truly no room for two. */
+@media (max-width: 339px) {
+  .pf .portfolio-item,
+  .pf .portfolio-item.is-video { flex: 0 0 100%; max-width: 210px; }
+}
+
+/* ================= Homepage "Recent projects" grid =================
+   Same fix as the Portfolio page: left-aligned flex-wrap with compact
+   fixed-width cards (no stranded 3rd column / half-empty row), text
+   exactly under its card, and 2-up side-by-side on phones. The 3-project
+   "editorial" variant is flattened into the same row so it matches. */
+#home-portfolio-grid {
+  display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: flex-start;
+  gap: 44px 28px; margin-top: 44px;
+}
+#home-portfolio-grid[hidden] { display: none; }
+#home-portfolio-grid .work-secondary-row { display: contents; }
+#home-portfolio-grid .work-card {
+  flex: 0 1 320px; max-width: 320px; min-width: 0; margin: 0;
+}
+#home-portfolio-grid .work-card.is-video { flex: 0 1 210px; max-width: 210px; }
+#home-portfolio-grid .work-card .work-thumb { width: 100%; aspect-ratio: 16/11; }
+#home-portfolio-grid .work-card.is-video .work-thumb {
+  aspect-ratio: 9/16; max-width: none; margin: 0; border-radius: 18px;
+}
+#home-portfolio-grid .work-meta { margin-top: 18px; padding: 0 4px; }
+#home-portfolio-grid .work-category { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+#home-portfolio-grid .work-name,
+#home-portfolio-grid .work-card-primary .work-name { font-size: 1.05rem; line-height: 1.3; }
+#home-portfolio-grid .work-desc {
+  font-size: .92rem; line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  #home-portfolio-grid { gap: 30px 14px; margin-top: 32px; }
+  #home-portfolio-grid .work-card,
+  #home-portfolio-grid .work-card.is-video { flex: 0 0 calc(50% - 7px); max-width: calc(50% - 7px); }
+  #home-portfolio-grid .work-card .work-thumb { aspect-ratio: 4/5; border-radius: 16px; }
+  #home-portfolio-grid .work-card.is-video .work-thumb { aspect-ratio: 9/16; border-radius: 16px; }
+  #home-portfolio-grid .work-meta { margin-top: 12px; padding: 0 2px; }
+  #home-portfolio-grid .work-category { font-size: .66rem; }
+  #home-portfolio-grid .work-name,
+  #home-portfolio-grid .work-card-primary .work-name { font-size: .95rem; }
+  #home-portfolio-grid .work-desc { font-size: .8rem; }
+  #home-portfolio-grid .work-client { font-size: .74rem; }
+  #home-portfolio-grid .work-view-details { font-size: .75rem; margin-top: 6px; }
+  #home-portfolio-grid .pf-vbadge { top: 10px; left: 10px; font-size: .68rem; padding: 4px 9px; gap: 6px; }
+  #home-portfolio-grid .pf-play { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  #home-portfolio-grid .pf-play svg { width: 18px; height: 18px; }
+}
+@media (max-width: 339px) {
+  #home-portfolio-grid .work-card,
+  #home-portfolio-grid .work-card.is-video { flex: 0 0 100%; max-width: 210px; }
+}

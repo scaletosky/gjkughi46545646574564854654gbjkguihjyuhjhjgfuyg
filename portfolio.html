@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* Applies the saved theme before first paint, so there's no flash of
+   the wrong theme on load. Must run inline, in <head>, before the
+   stylesheet — not from main.js, which only runs after the page has
+   already rendered. Kept deliberately tiny and dependency-free. */
+(function () {
+  try {
+    var saved = localStorage.getItem('theme-preference');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  } catch (e) {}
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio — Scale To Sky | Digital Marketing Agency in Lucknow</title>
@@ -113,6 +127,10 @@
       <a href="contact.html">Contact</a>
     </nav>
     <div class="header-cta">
+      <button class="theme-toggle" data-theme-toggle type="button" aria-label="Switch to dark theme" aria-pressed="false">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
       <a href="contact.html" class="btn btn-primary btn-giggle" data-cta-id="lets-talk">Book a Call</a>
       <button class="hamburger" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -122,6 +140,10 @@
 </header>
 
 <div class="mobile-panel">
+  <button class="theme-toggle" data-theme-toggle type="button" aria-label="Switch to dark theme" aria-pressed="false">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+  </button>
   <nav aria-label="Mobile">
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
@@ -151,7 +173,31 @@
     </div>
   </section>
 
-  <!-- 02. SHOWREEL (featured, video-first) -->
+  <!-- 02. STATS STRIP -->
+  <section class="pf-stats">
+    <div class="container pf-stats-inner reveal">
+      <div class="pf-stats-item">
+        <span class="pf-stats-num"><span data-counter="12" data-suffix="+">0</span></span>
+        <span class="pf-stats-label">Businesses served</span>
+      </div>
+      <span class="pf-stats-divider" aria-hidden="true"></span>
+      <div class="pf-stats-item">
+        <span class="pf-stats-num"><span data-counter="4" data-suffix="">0</span></span>
+        <span class="pf-stats-label">Industries covered</span>
+      </div>
+      <span class="pf-stats-divider" aria-hidden="true"></span>
+      <div class="pf-stats-item">
+        <span class="pf-stats-num"><span data-counter="6" data-suffix="">0</span></span>
+        <span class="pf-stats-label">Services under one roof</span>
+      </div>
+      <span class="pf-stats-divider" aria-hidden="true"></span>
+      <div class="pf-stats-item pf-stats-item-text">
+        <span class="pf-stats-label pf-stats-label-strong">Every project, one team start to finish</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03. SHOWREEL (featured, video-first) -->
   <section class="pf-reel" id="portfolio-featured-section" hidden>
     <div class="container">
       <div class="pf-sec-head">
@@ -162,7 +208,7 @@
     </div>
   </section>
 
-  <!-- 03. ALL PROJECTS + FILTERS -->
+  <!-- 04. ALL PROJECTS + FILTERS -->
   <section class="pf-all" id="portfolio-work">
     <div class="container">
       <div class="pf-sec-head">
@@ -199,18 +245,64 @@
     </div>
   </section>
 
-  <!-- 04. HOW WE APPROACH EVERY PROJECT -->
+  <!-- 05. HOW WE APPROACH EVERY PROJECT (numbered timeline) -->
   <section class="pf-how">
     <div class="container">
       <div class="pf-sec-head">
         <h2 class="pf-h2">How we approach every project.</h2>
         <p>Whatever the service, the way we work stays the same. That&rsquo;s what keeps the work useful, not just good-looking.</p>
       </div>
-      <ul class="pf-how-list"><li><h3>Strategy before execution</h3><p>We start by understanding what your business actually needs before recommending a service.</p></li><li><h3>Connected capabilities</h3><p>Marketing, content, websites, apps and advertising can work together when your business needs more than one piece.</p></li><li><h3>Clear communication</h3><p>Straightforward updates and explanations, without unnecessary jargon.</p></li><li><h3>Business-focused work</h3><p>The goal isn't just delivering a post, campaign or file. It's solving the problem behind it.</p></li></ul>
+      <ol class="pf-timeline">
+        <li class="pf-timeline-step reveal reveal-stagger">
+          <span class="pf-timeline-num">01</span>
+          <div class="pf-timeline-body">
+            <h3>Strategy before execution</h3>
+            <p>We start by understanding what your business actually needs before recommending a service.</p>
+          </div>
+        </li>
+        <li class="pf-timeline-step reveal reveal-stagger">
+          <span class="pf-timeline-num">02</span>
+          <div class="pf-timeline-body">
+            <h3>Connected capabilities</h3>
+            <p>Marketing, content, websites, apps and advertising can work together when your business needs more than one piece.</p>
+          </div>
+        </li>
+        <li class="pf-timeline-step reveal reveal-stagger">
+          <span class="pf-timeline-num">03</span>
+          <div class="pf-timeline-body">
+            <h3>Clear communication</h3>
+            <p>Straightforward updates and explanations, without unnecessary jargon.</p>
+          </div>
+        </li>
+        <li class="pf-timeline-step reveal reveal-stagger">
+          <span class="pf-timeline-num">04</span>
+          <div class="pf-timeline-body">
+            <h3>Business-focused work</h3>
+            <p>The goal isn&rsquo;t just delivering a post, campaign or file. It&rsquo;s solving the problem behind it.</p>
+          </div>
+        </li>
+      </ol>
     </div>
   </section>
 
-  <!-- 05. FAQ + SOCIAL -->
+  <!-- 06. TESTIMONIAL -->
+  <section class="section-pad">
+    <div class="container">
+      <div class="testimonial-spotlight reveal" data-testimonial-rotator>
+        <p class="testimonial-quote">Loading testimonial…</p>
+        <div class="testimonial-person">
+          <span class="avatar-mark"></span>
+          <div>
+            <div class="name"></div>
+            <div class="role"></div>
+          </div>
+        </div>
+        <div class="testimonial-nav"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07. FAQ + SOCIAL -->
   <section class="section-pad-sm faq-social-section">
     <div class="container">
       <div class="faq-social-grid">
@@ -337,7 +429,7 @@
     </div>
   </section>
 
-  <!-- 06. FINAL CTA -->
+  <!-- 08. FINAL CTA -->
   <section class="section-pad-sm">
     <div class="final-cta reveal">
       <h2 class="section-heading" style="margin: 0 auto;">Your business could be next.</h2>
@@ -420,5 +512,6 @@ window.STSK_BUNNY_PULL_ZONE = "vz-9b4196a6-3e0.b-cdn.net"; // e.g. vz-abc12345-d
 <script src="js/analytics.js"></script>
 <script src="js/main.js"></script>
 <script src="js/portfolio-public.js"></script>
+<script src="js/testimonials-public.js"></script>
 </body>
 </html>

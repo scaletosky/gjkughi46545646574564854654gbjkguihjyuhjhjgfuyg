@@ -79,8 +79,57 @@ function initPerfDetection() {
   requestAnimationFrame(sample);
 }
 
+/* ---------------- Theme toggle (light / dark) ----------------
+   The actual theme choice is already applied to <html data-theme="...">
+   by a tiny inline script in <head> (before first paint — see
+   theme-init.js / the inline snippet included in every page), so by
+   the time this runs the correct theme is already showing with no
+   flash. This function only wires up the navbar/mobile toggle buttons
+   so clicking them can flip that same attribute and persist the choice.
+
+   Kept as a small, self-contained module (ThemeManager) rather than a
+   loose function so anything it owns — storage key, how it decides
+   the starting theme, how it updates button state — stays in one
+   place if more themes or a "system" option are added later. ---------------- */
+const ThemeManager = {
+  STORAGE_KEY: 'theme-preference',
+
+  current() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  },
+
+  apply(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+      btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    });
+  },
+
+  toggle() {
+    const next = this.current() === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem(this.STORAGE_KEY, next);
+    } catch (e) {
+      /* localStorage unavailable (private browsing, storage full, etc.)
+         — theme still switches for this page view, it just won't
+         persist to the next page load. */
+    }
+    this.apply(next);
+  }
+};
+
+function initThemeToggle() {
+  // Sync button aria-pressed state with whatever the inline head
+  // script already applied, then wire up clicks.
+  ThemeManager.apply(ThemeManager.current());
+  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => ThemeManager.toggle());
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initPerfDetection();
+  initThemeToggle();
   initSmoothScroll();
   initHeaderScroll();
   initMobileMenu();
@@ -644,9 +693,6 @@ function initHeroServicesTransition() {
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (prefersReducedMotion) return; // CSS reduced-motion block also guards this, but skip the rAF loop entirely
-
-  const isMobile = window.matchMedia('(max-width: 640px)').matches;
-  if (isMobile) return; // simplified, non-sticky mobile experience per spec — plain stacked sections
 
   if (document.documentElement.classList.contains('perf-lite')) return; // low-end device — plain stacked sections, no sticky-pin/scale/filter rAF loop
 
