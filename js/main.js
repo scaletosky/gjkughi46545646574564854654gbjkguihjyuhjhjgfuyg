@@ -696,7 +696,23 @@ function initHeroServicesTransition() {
 
   if (document.documentElement.classList.contains('perf-lite')) return; // low-end device — plain stacked sections, no sticky-pin/scale/filter rAF loop
 
-  wrapper.classList.add('hst-active');
+  // The layered (sticky hero + rising cover) effect is only safe when the
+  // whole Hero fits inside the viewport AND we're not on a phone-width
+  // screen. Otherwise the pinned Hero is taller than the screen, so its
+  // lower part (trustline, "Scroll to explore") can never scroll into view
+  // and the Services card slides over the hero's CTA/capabilities row while
+  // they are still on screen. In that case we keep the plain stacked
+  // layout (no .hst-active). Evaluated on load and on every resize.
+  const mobileMQ = window.matchMedia('(max-width: 640px)');
+  let active = false;
+  let inView = false;
+  function layeredAllowed() {
+    // Small hysteresis once active: mobile browsers fire `resize` when the
+    // address bar hides/shows (innerHeight changes by ~50-100px), and we
+    // don't want the layout to flip back and forth mid-scroll near the limit.
+    const limit = window.innerHeight + (active ? 100 : 0);
+    return !mobileMQ.matches && hero.offsetHeight <= limit;
+  }
 
   // Distance (px) over which the transition completes, measured from the
   // top of the wrapper. Tied to the Hero's own height so it scales with
@@ -813,28 +829,39 @@ function initHeroServicesTransition() {
   // benefit while the user is well past Services.
   const io = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-      if (entry.isIntersecting) start();
+      inView = entry.isIntersecting;
+      if (!active) return;
+      if (inView) start();
       else stop();
     });
   }, { rootMargin: '200px 0px 0px 0px' });
   io.observe(wrapper);
 
-  window.addEventListener('resize', () => {
-    // If the viewport is resized down into the mobile breakpoint mid-session
-    // (e.g. rotating a device or resizing a desktop window), drop back to
-    // the plain stacked layout rather than leaving sticky positioning
-    // active at a width it wasn't designed for.
-    if (window.matchMedia('(max-width: 640px)').matches) {
-      stop();
-      wrapper.classList.remove('hst-active');
-      wrapper.style.removeProperty('--hst-progress');
-      return;
+  function enable() {
+    if (active) return;
+    active = true;
+    wrapper.classList.add('hst-active');
+    if (inView) start();
+  }
+  function disable() {
+    if (!active) return;
+    active = false;
+    stop();
+    wrapper.classList.remove('hst-active', 'hst-transitioning');
+    wrapper.style.removeProperty('--hst-progress');
+  }
+  function evaluate() {
+    if (layeredAllowed()) {
+      enable();
+      if (running) measure();
+    } else {
+      disable();
     }
-    if (!wrapper.classList.contains('hst-active')) {
-      wrapper.classList.add('hst-active');
-    }
-    if (running) measure();
-  }, { passive: true });
+  }
+
+  window.addEventListener('resize', evaluate, { passive: true });
+  window.addEventListener('load', evaluate); // fonts/images can change the Hero's height
+  evaluate();
 }
 
 /* ---------------- Nav logo: brand wordmark letter-reveal ----------------
