@@ -96,13 +96,19 @@
   --white: #15101F;      /* "white" = the lightest surface in dark mode (cards) */
   --surface: #0D0718;    /* page surface / alt sections */
 
-  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.45);
-  --shadow-hover: 0 0 60px rgba(168, 61, 224, 0.35);
+  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(109, 61, 245, 0.07);
+  --shadow-hover: 0 0 0 1px rgba(168, 100, 220, 0.45), 0 22px 60px rgba(109, 61, 245, 0.32), 0 0 90px rgba(232, 57, 155, 0.14);
 
-  --bg-body: linear-gradient(180deg, #0D0718 0%, #120320 50%, #0D0718 100%);
-  --bg-hero: linear-gradient(170deg, #11031C 0%, #120320 45%, #0F0319 100%);
-  --bg-section-wash: linear-gradient(170deg, #0F0319 0%, #120320 45%, #0D0718 100%);
-  --hero-fade-edge: #0D0718;
+  /* Ambient violet/magenta light pools over the near-black base */
+  --bg-body:
+    radial-gradient(1100px 720px at 10% -6%, rgba(109, 61, 245, 0.24), transparent 62%),
+    radial-gradient(900px 640px at 106% 20%, rgba(232, 57, 155, 0.13), transparent 60%),
+    radial-gradient(1000px 720px at 50% 112%, rgba(109, 61, 245, 0.18), transparent 60%),
+    linear-gradient(180deg, #0D0718 0%, #120320 50%, #0D0718 100%);
+  /* last stop is transparent so the hero melts into the page glow instead of ending on a hard edge */
+  --bg-hero: linear-gradient(170deg, #11031C 0%, #120320 55%, rgba(15, 3, 25, 0) 100%);
+  --bg-section-wash: linear-gradient(170deg, #0F0319 0%, #120320 55%, rgba(13, 7, 24, 0) 100%);  /* fades out: no hard edge under page heroes */
+  --hero-fade-edge: transparent;
   --grid-line: rgba(220, 180, 255, 0.05);
   --callout-warning-bg: rgba(199, 67, 61, 0.15);
   --tag-pink-soft: rgba(232, 57, 155, 0.15);
@@ -113,6 +119,22 @@
   --header-shadow-scrolled: 0 8px 30px rgba(0, 0, 0, 0.45);
 
   --accent-text: #B79CFF;   /* 8.7:1 on #120320 (was #5125C7 = 2.3:1) */
+
+  /* ---- Premium dark: remap the two brand tints that were built for a
+     WHITE page. Components already read these names, so pills, badges,
+     links and tags become translucent-violet glass + light-violet text
+     with no per-component edits. (Brand --primary / gradient unchanged.) */
+  --primary-light: rgba(139, 92, 246, 0.16);
+  --primary-dark: #B79CFF;
+
+  /* ---- Gradient text + glow tokens (dark only) ---- */
+  --grad-text-heading: linear-gradient(180deg, #FFFFFF 0%, #E6DBFF 55%, #C7B1FF 100%);
+  --grad-text-accent: linear-gradient(120deg, #B79CFF 0%, #D68CFF 50%, #FF8AC6 100%);
+  --glow-text: drop-shadow(0 0 26px rgba(139, 92, 246, 0.34));
+  --glow-text-sm: drop-shadow(0 0 12px rgba(168, 100, 220, 0.55));
+
+  color-scheme: dark;       /* native scrollbars, form controls, autofill */
+  scrollbar-color: #5B33C9 #0D0718;
 }
 
 /* ---- Reset ---- */
@@ -2449,8 +2471,8 @@ html.perf-lite .hero-scroll-wrapper.hst-active .hero-scroll-cover {
 .final-cta h2 { color: var(--on-brand); max-width: 640px; margin: 0 auto; }
 .final-cta p { color: rgba(255,255,255,0.9); margin: 20px auto 36px; max-width: 480px; }
 /* White pill on the purple card in BOTH themes (fixed colours, not theme tokens) */
-.final-cta .btn-primary { background: var(--on-brand); color: var(--primary-dark); box-shadow: none; }
-.final-cta .btn-primary:hover { background: var(--primary-light); }
+.final-cta .btn-primary { background: var(--on-brand); color: #5125C7; box-shadow: none; }
+.final-cta .btn-primary:hover { background: #F0EBFF; }
 
 @media (max-width: 640px) {
   .final-cta { margin: 0 20px; padding: 64px 28px; }
@@ -7076,4 +7098,240 @@ a:hover > .media-slot:not(.media-slot--empty) video {
   a:hover > .media-slot:not(.media-slot--empty) video {
     transform: none;
   }
+}
+
+
+/* ============================================================
+   PREMIUM DARK LAYER
+   ------------------------------------------------------------
+   Glow + gradient treatment for dark mode only. Everything is
+   scoped to [data-theme="dark"]; light mode is untouched.
+   Tokens live in the dark block at the top (--grad-text-*,
+   --glow-text*, remapped --primary-light/--primary-dark).
+   Rules using :where() keep specificity low so existing :hover
+   / state rules still win. To revert dark premium entirely,
+   delete this block (+ the tokens marked "Premium dark").
+   Contrast: every gradient stop is >= 7:1 on #0D0718.
+   ============================================================ */
+
+[data-theme="dark"] ::selection { background: rgba(139, 92, 246, 0.5); color: #FFFFFF; }
+
+/* ---- 1. Headings: soft metallic gradient + violet glow ---- */
+[data-theme="dark"] :is(.section-heading, .hero-heading, .faq-heading, .diff-heading,
+                        .founder-name-lg, .pf-h1, .pf-h2, .cs-hero-title, h2:not([class])) {
+  background: var(--grad-text-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: var(--glow-text);
+}
+/* Hero headline: gradient lives on each animated word (the words
+   have their own transforms), glow on the h1 so it isn't clipped by
+   the word masks. */
+[data-theme="dark"] .hero-tagline { filter: drop-shadow(0 0 42px rgba(139, 92, 246, 0.5)); }
+[data-theme="dark"] .hero-tagline .hero-word {
+  background: var(--grad-text-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme="dark"] .hero-tagline em .hero-word {
+  background: var(--grad-text-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---- 2. Accent words, kickers, big numerals: brand gradient, light stops ---- */
+[data-theme="dark"] :is(.accent, .kicker, .hero-brand em) {
+  background: var(--grad-text-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme="dark"] .kicker { filter: var(--glow-text-sm); }
+
+[data-theme="dark"] :is(.stat-num, .trust-strip-num, .story-traction-num, .believe-num,
+                        .bring-pillar-num, .service-detail-num, .service-modal-number,
+                        .other-service-num, .svc-included-num, .svc-scope-card-num,
+                        .svc-explore-num, .industry-row-num, .faq-item.is-open .faq-num,
+                        .founder-tagline, .diff-sub-vs, .pf-stats-num) {
+  background: var(--grad-text-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme="dark"] :is(.stat-num, .trust-strip-num, .story-traction-num, .pf-stats-num) { filter: var(--glow-text-sm); }
+/* outlined numerals: the stroke is the visible part, so lighten it */
+[data-theme="dark"] .svc-mistake-num { -webkit-text-stroke-color: var(--accent-text); }
+
+/* Icons / small accents that were flat brand-purple (3.4:1) -> light violet */
+[data-theme="dark"] :is(.mobile-panel nav a.active, .sc-analytics, .sc-growth, .sc-code-tag,
+                        .growth-stage-icon, .diff-block-icon-check, .connected-num,
+                        .contact-info-icon, .form-success-icon, .industry-row-icon,
+                        .svc-timeline-num, .team-initials, .deliverables-list svg,
+                        .service-modal-included li svg, .svc-chain-arrow,
+                        .blog-article-body li::marker, .pf-caps svg,
+                        .pf-timeline-step:not(:nth-child(1)) .pf-timeline-num) {
+  color: var(--accent-text);
+}
+[data-theme="dark"] .blog-article-body h2[data-section-number]::before { color: var(--accent-text); }
+/* the mobile "Us vs Them" label sits on a brand gradient: keep its dark end dark */
+[data-theme="dark"] .diff-block-label-sts { background: linear-gradient(135deg, #6D3DF5, #5125C7); }
+
+/* ---- 3. Cards: depth gradient, light-catching top edge, violet halo ---- */
+:where([data-theme="dark"]) :is(.service-card, .create-panel, .create-social-card, .growth-stage,
+    .diff-panel, .founder-highlight, .bring-pillar, .contact-form-card, .service-modal-panel,
+    .process-step, .solution-option, .industry-row, .services-flow-stage, .svc-glance,
+    .svc-fit-card, .svc-chain-step, .svc-scope-card, .svc-qualify-col, .blog-featured-card,
+    .blog-card, .pf-caps) {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 55%),
+    linear-gradient(160deg, #1D1330 0%, #15101F 58%, #110B1C 100%);
+  border-color: rgba(168, 100, 220, 0.30);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), var(--shadow-soft);
+}
+[data-theme="dark"] :is(.service-card, .create-panel, .process-step, .solution-option,
+    .industry-row, .blog-card, .svc-scope-card, .svc-fit-card):hover {
+  border-color: rgba(190, 140, 255, 0.60);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), var(--shadow-hover);
+}
+/* Hero -> Services cover: lit top edge instead of a flat slab */
+[data-theme="dark"] .hero-scroll-wrapper.hst-active .hero-scroll-cover {
+  background: linear-gradient(180deg, #1A1030 0%, #120A22 38%, #0D0718 100%);
+  border-top: 1px solid rgba(190, 140, 255, 0.45);
+  box-shadow: 0 -24px 80px rgba(109, 61, 245, 0.28), 0 -2px 0 rgba(232, 57, 155, 0.10);
+}
+/* Sections that opt into the flat "surface" band get a soft glow band instead */
+[data-theme="dark"] section[style*="background: var(--surface)"] {
+  background: linear-gradient(180deg, transparent 0%, rgba(40, 18, 76, 0.55) 50%, transparent 100%) !important;
+}
+
+/* ---- 4. Buttons: lit gradient pills with a halo ---- */
+[data-theme="dark"] .btn-primary {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28),
+              0 8px 30px rgba(139, 61, 224, 0.45),
+              0 0 60px rgba(232, 57, 155, 0.18);
+}
+[data-theme="dark"] .btn-primary:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36),
+              0 14px 44px rgba(139, 61, 224, 0.62),
+              0 0 84px rgba(232, 57, 155, 0.30);
+}
+[data-theme="dark"] .btn-secondary:hover,
+[data-theme="dark"] .theme-toggle:hover { box-shadow: 0 0 24px rgba(139, 92, 246, 0.4); }
+[data-theme="dark"] .btn-ghost:hover { text-shadow: 0 0 16px rgba(183, 156, 255, 0.55); }
+
+/* ---- 5. Final CTA: deep gradient + light pools instead of a flat purple slab ---- */
+[data-theme="dark"] .final-cta {
+  background:
+    radial-gradient(620px 320px at 88% 0%, rgba(232, 57, 155, 0.50), transparent 62%),
+    radial-gradient(720px 420px at 8% 108%, rgba(109, 61, 245, 0.60), transparent 62%),
+    linear-gradient(135deg, #24105F 0%, #3F1FA8 52%, #6B2AAE 100%);
+  border: 1px solid rgba(190, 140, 255, 0.35);
+  box-shadow: 0 30px 100px rgba(109, 61, 245, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+[data-theme="dark"] .final-cta h2 { filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.25)); }
+[data-theme="dark"] .final-cta .btn-primary {
+  box-shadow: 0 10px 40px rgba(255, 255, 255, 0.18), 0 0 60px rgba(255, 255, 255, 0.10);
+}
+
+/* ---- 6. Header + footer: gradient hairlines and glow ---- */
+[data-theme="dark"] .site-header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168, 100, 220, 0.75), rgba(232, 57, 155, 0.55), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+[data-theme="dark"] .site-header.is-scrolled::after { opacity: 1; }
+[data-theme="dark"] .main-nav a:hover { text-shadow: 0 0 16px rgba(183, 156, 255, 0.55); }
+[data-theme="dark"] .main-nav a::after,
+[data-theme="dark"] .main-nav a.active::after { background: var(--grad-text-accent); box-shadow: 0 0 10px rgba(183, 156, 255, 0.7); }
+
+[data-theme="dark"] .site-footer {
+  position: relative;
+  border-top: 0;
+  background: radial-gradient(900px 320px at 50% 0%, rgba(109, 61, 245, 0.22), transparent 70%);
+}
+[data-theme="dark"] .site-footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168, 100, 220, 0.75), rgba(232, 57, 155, 0.55), transparent);
+}
+[data-theme="dark"] .footer-col a:hover { color: var(--accent-text); text-shadow: 0 0 14px rgba(183, 156, 255, 0.6); }
+[data-theme="dark"] .footer-social a:hover { border-color: var(--accent-text); color: var(--accent-text); box-shadow: 0 0 18px rgba(139, 92, 246, 0.5); }
+
+/* ---- 7. Focus + form glow ---- */
+[data-theme="dark"] :is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #B79CFF;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.35), 0 0 28px rgba(139, 92, 246, 0.35);
+}
+[data-theme="dark"] .field :is(input, select, textarea):focus {
+  border-color: #B79CFF;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.35), 0 0 26px rgba(139, 92, 246, 0.25);
+}
+
+/* ---- 8. Fixes found by the dark-mode audit ---- */
+/* hard-coded light hairline between "Us vs Them" rows */
+[data-theme="dark"] .diff-row { border-bottom-color: rgba(168, 100, 220, 0.22); }
+
+/* "Content" banner: keep its own gradient (the generic card rule would flatten it) */
+[data-theme="dark"] .create-panel-wide-premium {
+  background:
+    radial-gradient(520px 220px at 100% 0%, rgba(232, 57, 155, 0.30), transparent 65%),
+    linear-gradient(120deg, #241A44 0%, #4A2A8A 55%, #7A2F8C 100%);
+  border-color: rgba(190, 140, 255, 0.40);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 60px rgba(109, 61, 245, 0.30);
+}
+/* Photo cards (Web / App): bright screenshots made white text washed-out.
+   Dim the photo a little and use a deeper violet-black legibility overlay. */
+[data-theme="dark"] :is(.create-visual-web, .create-visual-app) img { filter: brightness(0.8) saturate(1.1); }
+[data-theme="dark"] :is(.create-visual-web, .create-visual-app)::after {
+  background: linear-gradient(180deg, rgba(13, 7, 24, 0.20) 0%, rgba(13, 7, 24, 0.55) 40%, rgba(13, 7, 24, 0.94) 100%);
+}
+
+/* ---- 9. More brand-gradient text that was dim on dark (found by scanning for background-clip:text) ---- */
+[data-theme="dark"] :is(.services-hero-stat-num, .about-hero-stat-num, .logo-sky, .logo-sky .logo-char) {
+  background: var(--grad-text-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme="dark"] :is(.services-hero-stat-num, .about-hero-stat-num) { filter: var(--glow-text-sm); }
+/* "Most Popular" pill: pink-on-pink was ~2.5:1 */
+[data-theme="dark"] .service-card-featured-tag {
+  color: #FF9ACB;
+  border: 1px solid rgba(255, 138, 198, 0.35);
+  box-shadow: 0 0 18px rgba(232, 57, 155, 0.25);
+}
+
+/* ---- 10. Hero bottom fades that used the (dark) card colour as the page colour ---- */
+[data-theme="dark"] .about-hero::after { background: none; }
+/* numbered article headings: keep the small number in accent colour, not the heading gradient */
+[data-theme="dark"] .blog-article-body h2[data-section-number]::before { -webkit-text-fill-color: var(--accent-text); }
+
+/* ---- 11. Low-end devices: keep the gradients, drop the expensive glow filters ---- */
+html.perf-lite[data-theme="dark"] :is(.section-heading, .hero-heading, .faq-heading, .diff-heading,
+    .founder-name-lg, .pf-h1, .pf-h2, .cs-hero-title, h2:not([class]), .hero-tagline, .kicker,
+    .stat-num, .trust-strip-num, .story-traction-num, .pf-stats-num,
+    .services-hero-stat-num, .about-hero-stat-num, .final-cta h2) {
+  filter: none;
+}
+
+/* ---- 12. Keep the hero's magenta glow inside the hero so overflow:hidden can't slice it ---- */
+[data-theme="dark"] .hero-glow-warm {
+  bottom: 6%;
+  right: 8%;
+  width: min(480px, 90vw);
+  height: min(480px, 90vw);
 }
