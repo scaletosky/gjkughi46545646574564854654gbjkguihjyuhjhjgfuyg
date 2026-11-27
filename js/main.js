@@ -45,38 +45,77 @@ function initPerfDetection() {
   }
 
   // ---- Real frame-time sample ----
-  // Measures actual frame gaps for ~600ms right at load. A healthy
-  // 60Hz display keeps frames close to ~16.7ms; a struggling device
-  // (or one already busy loading/parsing the rest of the page) shows
-  // up as noticeably longer average gaps. Runs once, self-stops, and
-  // costs nothing after its window closes.
-  const SAMPLE_MS = 600;
-  const JANK_THRESHOLD_MS = 27; // ~2 dropped frames' worth on a 60Hz display
-  let lastTime = null;
-  let totalGap = 0;
-  let frameCount = 0;
-  let startTime = null;
+  // This used to flip to lite mode at RANDOM on perfectly healthy machines
+  // (it averaged the gaps over the first 600ms, which is exactly when the
+  // page is busy parsing/decoding), silently turning off the hero scroll
+  // animation on some loads. Now:
+  //  - wait for window.load (+400ms) so we measure the settled page;
+  //  - skip the first frames of a window and use the MEDIAN gap, so a few
+  //    long frames can't drag the result over the threshold;
+  //  - never measure while the tab is hidden (rAF is paused/throttled);
+  //  - need TWO janky windows in a row before switching to lite;
+  //  - 30fps (battery saver / 30Hz panels) is fine. Only a median gap
+  //    above ~38ms (< ~26fps) counts as a struggling device.
+  const WINDOW_MS = 500;      // minimum length of a measuring window
+  const MAX_WINDOW_MS = 2500; // a slow device yields few frames: wait for samples, but not forever
+  const SKIP_FRAMES = 3;
+  const MIN_SAMPLES = 8;      // preferred number of frame gaps per window
+  const USABLE_SAMPLES = 4;   // fewest gaps we still trust at MAX_WINDOW_MS
+  const JANK_MEDIAN_MS = 38;
+  const MAX_ROUNDS = 8;
+  let confirming = false;
 
-  function sample(time) {
-    if (startTime === null) startTime = time;
-    if (lastTime !== null) {
-      totalGap += time - lastTime;
-      frameCount += 1;
-    }
-    lastTime = time;
-
-    if (time - startTime < SAMPLE_MS) {
-      requestAnimationFrame(sample);
-      return;
-    }
-
-    const avgGap = frameCount > 0 ? totalGap / frameCount : 0;
-    if (avgGap > JANK_THRESHOLD_MS) {
-      enableLiteMode();
-    }
+  function median(list) {
+    const sorted = list.slice().sort((x, y) => x - y);
+    const mid = sorted.length >> 1;
+    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   }
 
-  requestAnimationFrame(sample);
+  function measureWindow(done) {
+    let last = null;
+    let start = null;
+    let frames = 0;
+    let hiddenDuring = document.hidden;
+    const gaps = [];
+    const onVisibility = () => { if (document.hidden) hiddenDuring = true; };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    function tick(time) {
+      if (start === null) start = time;
+      if (last !== null) {
+        frames += 1;
+        if (frames > SKIP_FRAMES) gaps.push(time - last);
+      }
+      last = time;
+      const elapsed = time - start;
+      if ((elapsed < WINDOW_MS || gaps.length < MIN_SAMPLES) && elapsed < MAX_WINDOW_MS) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      document.removeEventListener('visibilitychange', onVisibility);
+      done(hiddenDuring || gaps.length < USABLE_SAMPLES ? null : median(gaps));
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function decide(round) {
+    if (round >= MAX_ROUNDS) return; // couldn't get a clean window: stay in full mode
+    if (document.hidden) {
+      document.addEventListener('visibilitychange', () => decide(round), { once: true });
+      return;
+    }
+    measureWindow((medianGap) => {
+      if (medianGap === null) { setTimeout(() => decide(round + 1), 500); return; } // unusable window
+      if (medianGap <= JANK_MEDIAN_MS) return;          // healthy -> done
+      if (confirming) { enableLiteMode(); return; }      // second janky window in a row
+      confirming = true;
+      setTimeout(() => decide(round + 1), 300);
+    });
+  }
+
+  const begin = () => setTimeout(() => decide(0), 400);
+  if (document.readyState === 'complete') begin();
+  else window.addEventListener('load', begin, { once: true });
 }
 
 /* ---------------- Theme toggle (light / dark) ----------------
@@ -706,12 +745,29 @@ function initHeroServicesTransition() {
   const mobileMQ = window.matchMedia('(max-width: 640px)');
   let active = false;
   let inView = false;
+  const heroActions = hero.querySelector('.hero-actions');
+  // Distance from the top of the hero to the bottom of `el`, ignoring
+  // transforms (the hero is scaled while the effect runs).
+  function offsetWithin(el, root) {
+    let y = 0;
+    let node = el;
+    while (node && node !== root) { y += node.offsetTop; node = node.offsetParent; }
+    return node === root ? y : null;
+  }
   function layeredAllowed() {
+    if (mobileMQ.matches) return false;
+    // What has to stay reachable while the Hero is pinned is the CTA row.
+    // (The decorative trustline / "Scroll to explore" under it may sit
+    // beneath the rising cover on short windows - that's fine.) Requiring
+    // the WHOLE hero to fit was too strict: it switched the effect off on
+    // ordinary laptop windows (e.g. 1366x768 or with DevTools open).
     // Small hysteresis once active: mobile browsers fire `resize` when the
-    // address bar hides/shows (innerHeight changes by ~50-100px), and we
-    // don't want the layout to flip back and forth mid-scroll near the limit.
-    const limit = window.innerHeight + (active ? 100 : 0);
-    return !mobileMQ.matches && hero.offsetHeight <= limit;
+    // address bar hides/shows, and we don't want the layout to flip back
+    // and forth mid-scroll near the limit.
+    const vh = window.innerHeight + (active ? 100 : 0);
+    const rel = heroActions ? offsetWithin(heroActions, hero) : null;
+    const needed = rel === null ? hero.offsetHeight : rel + heroActions.offsetHeight + 24;
+    return needed <= vh;
   }
 
   // Distance (px) over which the transition completes, measured from the
@@ -861,6 +917,12 @@ function initHeroServicesTransition() {
 
   window.addEventListener('resize', evaluate, { passive: true });
   window.addEventListener('load', evaluate); // fonts/images can change the Hero's height
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(evaluate);
+  // If the perf sampler later decides this is a genuinely slow device,
+  // stop the rAF loop too (CSS already neutralises the visuals).
+  new MutationObserver(() => {
+    if (document.documentElement.classList.contains('perf-lite')) disable();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   evaluate();
 }
 
